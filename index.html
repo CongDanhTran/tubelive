@@ -15,7 +15,7 @@
             padding: 0;
             font-weight: 400;
             line-height: 1.5;
-            font-size: 4em;
+            font-size: 1.7em;
 
         }
 
@@ -29,21 +29,27 @@
 
         #arrivals {
             display: grid;
-            grid-template-columns: 49% 49%;
-            padding: 0px;
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            /* responsive */
+            gap: 15px;
+            padding: 10px;
             margin: 0;
         }
+
 
         .platform-section {
             padding: 10px;
             border-radius: 10px;
             height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
-        .platform-section h2 {
+        .platform-section h3 {
             color: red;
-            font-size: 0.5em;
             letter-spacing: 2px;
             text-transform: uppercase;
             margin: 0;
@@ -51,7 +57,6 @@
         }
 
         .arrival-time {
-            font-size: 0.45em;
             padding: 10px;
             background-color: #000;
             border-bottom: 1px solid #555;
@@ -64,10 +69,15 @@
             font-weight: bold;
             margin: 5px 0;
             line-height: 1.5;
+            padding: 10px;
+            background-color: #000;
+            margin: 5px 0;
+            letter-spacing: 1px;
+            text-align: left;
         }
 
         .live-location {
-            font-size: 0.8em;
+
             font-weight: light;
             color: green;
         }
@@ -83,7 +93,7 @@
         }
 
         #journeyContainer {
-            font-size: 0.3em;
+
             display: flex;
         }
 
@@ -91,56 +101,40 @@
             padding: 10px;
             text-align: left;
         }
+      
+      
+      
+        @media (max-width: 900px) {
 
-        #arrivals {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            /* responsive */
-            gap: 15px;
-            padding: 10px;
-            margin: 0;
+
+            #journeyContainer {
+
+                display: grid;
+                grid-template-columns: 1fr;
+            }
         }
 
-        .platform-section {
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            border-radius: 10px;
-            overflow: hidden;
+
         }
 
-        .arrival-time {
-            padding: 10px;
-            background-color: #000;
-            margin: 5px 0;
-            letter-spacing: 1px;
-            text-align: left;
-        }
+
 
         @media (max-width: 768px) {
             body {
-                font-size: 2em;
+                font-size: 1.4em;
                 /* smaller text for phones */
             }
 
             #arrivals {
                 grid-template-columns: 1fr;
-                /* single column on small screens */
             }
 
-            .platform-section h2 {
-                font-size: 0.8em;
-            }
 
-            .arrival-time {
-                font-size: 0.8em;
+            #journeyContainer {
+
+                display: grid;
+                grid-template-columns: 1fr;
             }
-          
-                  #journeyContainer {
-                          font-size: 0.8em;
-                                display: grid;
-                      grid-template-columns: 1fr;
-          }
         }
 
 
@@ -210,7 +204,7 @@ font-weight:bold;"></span>
                 const platformSection = document.createElement('div');
                 platformSection.classList.add('platform-section');
 
-                const platformHeader = document.createElement('h2');
+                const platformHeader = document.createElement('h3');
                 platformHeader.textContent = platform;
                 platformSection.appendChild(platformHeader);
 
@@ -232,7 +226,7 @@ font-weight:bold;"></span>
                     arrivalDiv.innerHTML = ` 
                  <div class="departure">
                    <p class="destination"><span>${destination} - ${expectedArrival}</span></p>
-                   <p class="time-left">in <span>${timeToStation} mins</span></p>
+                   <p class="time-left"><span>${timeToStation} mins</span></p>
                  </div>
                  <div class="departure">
                    <p class="live-location">Live: <span>${currentLocation || 'N/A'}</span></p>
