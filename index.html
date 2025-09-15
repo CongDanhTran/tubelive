@@ -287,11 +287,16 @@
         setInterval(fetchJourneys, 20000);
     </script>
 
-    <div
-        style="position: fixed; bottom: 10px; right: 10px; background: #111; padding: 10px; border-radius: 8px; color: white; font-size: 0.4em;">
-        <label for="fontSlider">Font Size:</label>
-        <input type="range" id="fontSlider" min="1" max="6" step="0.1">
+    <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
+        <button id="cogBtn"
+            style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
+        <div id="sliderContainer"
+            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:0.4em;">
+            <label for="fontSlider">Font Size:</label>
+            <input type="range" id="fontSlider" min="1" max="6" step="0.1">
+        </div>
     </div>
+
     <script>
         function setCookie(name, value, days) {
             const d = new Date();
@@ -315,6 +320,8 @@
 
         // --- Font Size Control ---
         const fontSlider = document.getElementById("fontSlider");
+        const sliderContainer = document.getElementById("sliderContainer");
+        const cogBtn = document.getElementById("cogBtn");
 
         // Update on slider change
         fontSlider.addEventListener("input", (e) => {
@@ -340,6 +347,17 @@
             }
         });
 
+        cogBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            sliderContainer.style.display = sliderContainer.style.display === "none" ? "block" : "none";
+        });
+
+        // Hide slider when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!document.getElementById("fontControls").contains(e.target)) {
+                sliderContainer.style.display = "none";
+            }
+        });
 
     </script>
 </body>
