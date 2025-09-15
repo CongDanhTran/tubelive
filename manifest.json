@@ -2,10 +2,10 @@
   "background_color": "#ffffff",
   "dir": "ltr",
   "display": "standalone",
-  "name": "tubelive-production.up.railway",
+  "name": "Stepney Green",
   "orientation": "any",
   "scope": "/",
-  "short_name": "tubelive-production.up.railway",
+  "short_name": "Stepney Green",
   "start_url": "/",
   "theme_color": "#ffffff"
 }
