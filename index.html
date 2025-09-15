@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tube</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000000;
+            color: #ff9729;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            font-weight: 400;
+            line-height: 1.5;
+            font-size: 4em;
+
+        }
+
+        .station-name {
+            font-weight: bold;
+        }
+
+        .time-left {
+            color: red;
+        }
+
+        #arrivals {
+            display: grid;
+            grid-template-columns: 49% 49%;
+            padding: 0px;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .platform-section {
+            padding: 10px;
+            border-radius: 10px;
+            height: 100%;
+        }
+
+        .platform-section h2 {
+            color: red;
+            font-size: 0.5em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+            color: white;
+        }
+
+        .arrival-time {
+            font-size: 0.45em;
+            padding: 10px;
+            background-color: #000;
+            border-bottom: 1px solid #555;
+            margin: 5px 0;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        .arrival-time p {
+            font-weight: bold;
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        .live-location {
+            font-size: 0.8em;
+            font-weight: light;
+            color: green;
+        }
+
+        .departure {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .departure p {
+            margin: 0;
+            padding: 0;
+        }
+
+        #journeyContainer {
+            font-size: 0.3em;
+            display: flex;
+        }
+
+        .journey {
+            padding: 10px;
+            text-align: left;
+        }
+
+        #arrivals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            /* responsive */
+            gap: 15px;
+            padding: 10px;
+            margin: 0;
+        }
+
+        .platform-section {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .arrival-time {
+            padding: 10px;
+            background-color: #000;
+            margin: 5px 0;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 2em;
+                /* smaller text for phones */
+            }
+
+            #arrivals {
+                grid-template-columns: 1fr;
+                /* single column on small screens */
+            }
+
+            .platform-section h2 {
+                font-size: 0.8em;
+            }
+
+            .arrival-time {
+                font-size: 0.8em;
+            }
+          
+                  #journeyContainer {
+                          font-size: 0.8em;
+                                display: grid;
+                      grid-template-columns: 1fr;
+          }
+        }
+
+
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+
+        <span class="station-name">Stepney Green</span>
+        <span id="clock" style="         color: red;
+font-weight:bold;"></span>
+    </div>
+    <div id="arrivals"></div>
+    <div id="journeyContainer"></div>
+    <script>
+
+
+        // Function to update the live clock
+        function updateClock() {
+            const now = new Date();
+            const clockElement = document.getElementById('clock');
+            clockElement.textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000); // Update clock every second
+
+
+
+        // Fetch the live data every 30 seconds
+        function fetchArrivals() {
+            fetch('https://api.tfl.gov.uk/StopPoint/940GZZLUSGN/arrivals')
+                .then(response => response.json())
+                .then(data => {
+                    updateArrivals(data);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Function to update arrival times on the page
+        function updateArrivals(data) {
+            const arrivalsContainer = document.getElementById('arrivals');
+            arrivalsContainer.innerHTML = ''; // Clear previous data
+
+            // Sort the data by time left (ascending order)
+            const sortedData = data.sort((a, b) => a.timeToStation - b.timeToStation);
+
+            // Group the data by platform
+            const platforms = {};
+
+            sortedData.forEach(item => {
+                const platform = item.platformName;
+                if (!platforms[platform]) {
+                    platforms[platform] = [];
+                }
+                platforms[platform].push(item);
+            });
+
+            const sortedPlatforms = Object.keys(platforms).sort((a, b) => {
+
+                return a - b;
+            });
+
+
+            // Create platform sections and display the arrivals
+            sortedPlatforms.forEach(platform => {
+                const platformSection = document.createElement('div');
+                platformSection.classList.add('platform-section');
+
+                const platformHeader = document.createElement('h2');
+                platformHeader.textContent = platform;
+                platformSection.appendChild(platformHeader);
+
+
+                platforms[platform].forEach((item, i) => {
+
+                    if (i > 4) {
+                        return;
+                    }
+                    const arrivalDiv = document.createElement('div');
+                    arrivalDiv.classList.add('arrival-time');
+
+                    const line = item.lineName || 'Line Unknown';
+                    const destination = item.destinationName?.replace("Underground Station", "") || 'Destination Unknown';
+                    const currentLocation = item.currentLocation || 'Location Unknown';
+                    const timeToStation = Math.floor(item.timeToStation / 60) || 0;
+                    const expectedArrival = new Date(item.expectedArrival).toLocaleTimeString();
+
+                    arrivalDiv.innerHTML = ` 
+                 <div class="departure">
+                   <p class="destination"><span>${destination} - ${expectedArrival}</span></p>
+                   <p class="time-left">in <span>${timeToStation} mins</span></p>
+                 </div>
+                 <div class="departure">
+                   <p class="live-location">Live: <span>${currentLocation || 'N/A'}</span></p>
+                 </div>
+               `;
+
+                    platformSection.appendChild(arrivalDiv);
+                });
+
+                arrivalsContainer.appendChild(platformSection);
+            });
+        }
+
+
+        // Initial data fetch
+        fetchArrivals();
+        setInterval(fetchArrivals, 20000);  // Fetch data every 30 seconds
+
+    </script>
+    <script>
+        const API_URL = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=bus,tube&walkingSpeed=fast&useRealTimeLiveArrivals=true";
+
+        async function fetchJourneys() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                displayJourneys(data.journeys);
+            } catch (error) {
+                console.error("Error fetching journey data:", error);
+                document.getElementById("journeyContainer").innerHTML = "Failed to load journey data.";
+            }
+        }
+
+        function displayJourneys(journeys) {
+            const container = document.getElementById("journeyContainer");
+            container.innerHTML = "";
+
+
+
+            if (!journeys || journeys.length === 0) {
+                container.innerHTML = "No journeys available.";
+                return;
+            }
+
+            journeys.forEach(journey => {
+                const journeyDiv = document.createElement("div");
+                journeyDiv.className = "journey";
+
+                const startTime = new Date(journey.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const arrivalTime = new Date(journey.arrivalDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                journeyDiv.innerHTML = `
+                 
+                     <p> <strong> ${startTime} - ${arrivalTime} </strong>  <span class="time-left"> ( ${journey.duration}' )</span></p>
+         </h3>
+                     <div class="legs">
+                         ${journey.legs.map((leg, i) => `
+                             <p>• ${leg.instruction.summary}  ${new Date(leg.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${leg.duration}')</p>
+                         `).join("")}
+                     </div>
+                 `;
+
+                container.appendChild(journeyDiv);
+            });
+        }
+
+        fetchJourneys();
+        setInterval(fetchJourneys, 20000);
+    </script>
+</body>
+
+</html>
