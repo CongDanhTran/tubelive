@@ -286,6 +286,62 @@
         fetchJourneys();
         setInterval(fetchJourneys, 20000);
     </script>
+
+    <div
+        style="position: fixed; bottom: 10px; right: 10px; background: #111; padding: 10px; border-radius: 8px; color: white; font-size: 0.4em;">
+        <label for="fontSlider">Font Size:</label>
+        <input type="range" id="fontSlider" min="1" max="6" step="0.1">
+    </div>
+    <script>
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(cname) === 0) {
+                    return c.substring(cname.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        // --- Font Size Control ---
+        const fontSlider = document.getElementById("fontSlider");
+
+        // Update on slider change
+        fontSlider.addEventListener("input", (e) => {
+            applyFontSize(e.target.value);
+        });
+
+
+        function applyFontSize(size) {
+            document.body.style.fontSize = size + "em";
+            setCookie("fontSize", size, 30); // save for 30 days
+        }
+
+        // Load saved font size
+        addEventListener("DOMContentLoaded", () => {
+
+            let savedSize = getCookie("fontSize");
+
+            if (savedSize) {
+                document.body.style.fontSize = savedSize + "em";
+                fontSlider.value = savedSize;
+            } else {
+                fontSlider.value = 1; // default
+            }
+        });
+
+
+    </script>
 </body>
 
 </html>
