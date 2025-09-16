@@ -294,10 +294,10 @@
         const API_URL_5AM_Bus = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube,bus&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=12";
 
         fetchJourneys(API_URL_5AM_tube, "journeyContainer");
-        setInterval(fetchJourneys(API_URL_5AM_tube, "journeyContainer"), 20000);
+        setInterval(fetchJourneys(API_URL_5AM_tube, "journeyContainer"), 120000);
 
         fetchJourneys(API_URL_5AM_Bus, "journeyContainer2");
-        setInterval(fetchJourneys(API_URL_5AM_Bus, "journeyContainer2"), 20000);
+        setInterval(fetchJourneys(API_URL_5AM_Bus, "journeyContainer2"), 120000);
 
         fetchJourneys(API_URL_now, "journeyContainer1");
         setInterval(fetchJourneys(API_URL_now, "journeyContainer1"), 20000);
