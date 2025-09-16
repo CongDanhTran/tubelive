@@ -135,9 +135,10 @@
 
 <body>
     <div>
-        <span class="station-name">Stepney Green</span>
-        <span id="clock" style="color: red; font-weight:bold;"></span>
+       
+        <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
     </div>
+    <span class="station-name">Stepney Green Live</span>
     <div id="arrivals"></div>
     <h3>Marriot Tube + Bus Live</h3>
     <div class="journeyContainer" id="journeyContainer1"></div>
@@ -167,9 +168,17 @@
             fetch('https://api.tfl.gov.uk/StopPoint/940GZZLUSGN/arrivals')
                 .then(response => response.json())
                 .then(data => {
-                    updateArrivals(data);
+                    if (data.length === 0) {
+                        arrivals.innerHTML = "<h2 style='color: red;'>No tube</h2>";
+
+                    } else {
+                        updateArrivals(data);
+                    }
                 })
-                .catch(error => console.error('Error fetching data:', error));
+                .catch(error => {
+                    arrivals.innerHTML = "<h2 style='color: red;'>Error fetching tube data</h2>";
+                    console.error('Error fetching data:', error)
+                });
         }
 
         // Function to update arrival times on the page
