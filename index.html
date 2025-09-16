@@ -48,7 +48,7 @@
             overflow: hidden;
         }
 
-        .platform-section h3 {
+        h3 {
             color: red;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -92,7 +92,7 @@
             padding: 0;
         }
 
-        #journeyContainer {
+        .journeyContainer {
 
             display: flex;
         }
@@ -106,7 +106,7 @@
         @media (max-width: 900px) {
 
 
-            #journeyContainer {
+            .journeyContainer {
 
                 display: grid;
                 grid-template-columns: 1fr;
@@ -123,7 +123,7 @@
             }
 
 
-            #journeyContainer {
+            .journeyContainer {
 
                 display: grid;
                 grid-template-columns: 1fr;
@@ -139,7 +139,15 @@
         <span id="clock" style="color: red; font-weight:bold;"></span>
     </div>
     <div id="arrivals"></div>
-    <div id="journeyContainer"></div>
+    <h3>Marriot Tube + Bus Live</h3>
+    <div class="journeyContainer" id="journeyContainer1"></div>
+
+    <h3>Marriot 5am Tube only</h3>
+    <div class="journeyContainer" id="journeyContainer"></div>
+
+    <h3>Marriot 5am Bus only</h3>
+    <div class="journeyContainer" id="journeyContainer2"></div>
+
 
     <script>
 
@@ -237,21 +245,19 @@
 
     </script>
     <script>
-        const API_URL = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=bus,tube&walkingSpeed=fast&useRealTimeLiveArrivals=true";
-
-        async function fetchJourneys() {
+        async function fetchJourneys(api, containerName) {
+            const container = document.getElementById(containerName);
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(api);
                 const data = await response.json();
-                displayJourneys(data.journeys);
+                displayJourneys(data.journeys, container);
             } catch (error) {
                 console.error("Error fetching journey data:", error);
-                document.getElementById("journeyContainer").innerHTML = "Failed to load journey data.";
+                container.innerHTML = "Failed to load journey data.";
             }
         }
 
-        function displayJourneys(journeys) {
-            const container = document.getElementById("journeyContainer");
+        function displayJourneys(journeys, container) {
             container.innerHTML = "";
 
 
@@ -283,8 +289,18 @@
             });
         }
 
-        fetchJourneys();
-        setInterval(fetchJourneys, 20000);
+        const API_URL_now = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=bus,tube&walkingSpeed=fast&useRealTimeLiveArrivals=true";
+        const API_URL_5AM_tube = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=20";
+        const API_URL_5AM_Bus = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube,bus&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=15";
+
+        fetchJourneys(API_URL_5AM_tube, "journeyContainer");
+        setInterval(fetchJourneys(API_URL_5AM_tube, "journeyContainer"), 20000);
+
+        fetchJourneys(API_URL_5AM_Bus, "journeyContainer2");
+        setInterval(fetchJourneys(API_URL_5AM_Bus, "journeyContainer2"), 20000);
+
+        fetchJourneys(API_URL_now, "journeyContainer1");
+        setInterval(fetchJourneys(API_URL_now, "journeyContainer1"), 20000);
     </script>
 
     <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
