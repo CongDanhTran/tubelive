@@ -241,7 +241,7 @@
             const platforms = {};
 
             data.ROOT.S.P.forEach(item0 => {
-                platforms[item0['@attributes'].N] = item0.T;
+                platforms[item0['@attributes'].N] = item0.T??[];
                
             });
 
