@@ -135,7 +135,7 @@
 
 <body>
     <div>
-       
+
         <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
     </div>
     <span class="station-name">Stepney Green Live</span>
@@ -152,6 +152,52 @@
 
     <script>
 
+        function xmlToJson(xml) {
+            // Create the return object
+            var obj = {};
+
+            if (xml.nodeType == 1) {
+                // element
+                // do attributes
+                if (xml.attributes.length > 0) {
+                    obj["@attributes"] = {};
+                    for (var j = 0; j < xml.attributes.length; j++) {
+                        var attribute = xml.attributes.item(j);
+                        obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+                    }
+                }
+            } else if (xml.nodeType == 3) {
+                // text
+                obj = xml.nodeValue;
+            }
+
+            // do children
+            // If all text nodes inside, get concatenated text from them.
+            var textNodes = [].slice.call(xml.childNodes).filter(function (node) {
+                return node.nodeType === 3;
+            });
+            if (xml.hasChildNodes() && xml.childNodes.length === textNodes.length) {
+                obj = [].slice.call(xml.childNodes).reduce(function (text, node) {
+                    return text + node.nodeValue;
+                }, "");
+            } else if (xml.hasChildNodes()) {
+                for (var i = 0; i < xml.childNodes.length; i++) {
+                    var item = xml.childNodes.item(i);
+                    var nodeName = item.nodeName;
+                    if (typeof obj[nodeName] == "undefined") {
+                        obj[nodeName] = xmlToJson(item);
+                    } else {
+                        if (typeof obj[nodeName].push == "undefined") {
+                            var old = obj[nodeName];
+                            obj[nodeName] = [];
+                            obj[nodeName].push(old);
+                        }
+                        obj[nodeName].push(xmlToJson(item));
+                    }
+                }
+            }
+            return obj;
+        }
 
         // Function to update the live clock
         function updateClock() {
@@ -165,15 +211,20 @@
 
         // Fetch the live data every 30 seconds
         function fetchArrivals() {
-            fetch('https://api.tfl.gov.uk/StopPoint/940GZZLUSGN/arrivals')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length === 0) {
-                        arrivals.innerHTML = "<h2 style='color: red;'>No tube</h2>";
-
-                    } else {
-                        updateArrivals(data);
+            fetch('https://api.tfl.gov.uk/trackernet/PredictionDetailed/H/STG?app_key=f6de10a6e45f4c55b9e4de791bbc60c0')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
+                    return response.text();
+                })
+                .then(xmlString => {
+                    // Parse XML string into a DOM object
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+
+                    updateArrivals(xmlToJson(xmlDoc));
+
                 })
                 .catch(error => {
                     arrivals.innerHTML = "<h2 style='color: red;'>Error fetching tube data</h2>";
@@ -186,18 +237,12 @@
             const arrivalsContainer = document.getElementById('arrivals');
             arrivalsContainer.innerHTML = ''; // Clear previous data
 
-            // Sort the data by time left (ascending order)
-            const sortedData = data.sort((a, b) => a.timeToStation - b.timeToStation);
-
             // Group the data by platform
             const platforms = {};
 
-            sortedData.forEach(item => {
-                const platform = item.platformName;
-                if (!platforms[platform]) {
-                    platforms[platform] = [];
-                }
-                platforms[platform].push(item);
+            data.ROOT.S.P.forEach(item0 => {
+                platforms[item0['@attributes'].N] = item0.T;
+               
             });
 
             const sortedPlatforms = Object.keys(platforms).sort((a, b) => {
@@ -216,29 +261,30 @@
                 platformSection.appendChild(platformHeader);
 
 
-                platforms[platform].forEach((item, i) => {
+                platforms[platform].forEach((item1, i) => {
 
                     if (i > 4) {
                         return;
                     }
                     const arrivalDiv = document.createElement('div');
                     arrivalDiv.classList.add('arrival-time');
+                    const item = item1['@attributes'];
 
-                    const line = item.lineName || 'Line Unknown';
-                    const destination = item.destinationName?.replace("Underground Station", "") || 'Destination Unknown';
-                    const currentLocation = item.currentLocation || 'Location Unknown';
-                    const timeToStation = Math.floor(item.timeToStation / 60) || 0;
-                    const expectedArrival = new Date(item.expectedArrival).toLocaleTimeString();
+                    const line = item?.Destination || 'Line Unknown';
+                    const destination = item.Destination?.replace("Underground Station", "") || 'Destination Unknown';
+                    const currentLocation = item.Location || 'Location Unknown';
+                    const timeToStation = Math.floor(item.SecondsTo / 60) || 0;
+                    const expectedArrival = item.ArrivalTime
 
                     arrivalDiv.innerHTML = ` 
                  <div class="departure">
-                   <p class="destination"><span>${destination} - ${expectedArrival}</span></p>
-                   <p class="time-left"><span>${timeToStation} mins</span></p>
+                  <p class="destination"><span>${destination} - ${expectedArrival}</span></p>
+                  <p class="time-left"><span>${timeToStation} mins</span></p>
                  </div>
                  <div class="departure">
-                   <p class="live-location">Live: <span>${currentLocation || 'N/A'}</span></p>
+                  <p class="live-location">Live: <span>${currentLocation || 'N/A'}</span></p>
                  </div>
-               `;
+              `;
 
                     platformSection.appendChild(arrivalDiv);
                 });
