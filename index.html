@@ -274,11 +274,20 @@
                     const destination = item.Destination?.replace("Underground Station", "") || 'Destination Unknown';
                     const currentLocation = item.Location || 'Location Unknown';
                     const timeToStation = Math.floor(item.SecondsTo / 60) || 0;
-                    const expectedArrival = item.ArrivalTime
+                    const isEmpty = (str) => (!str?.length);
+                    var expectedArrival = "Now";
+                    
+                    if(!isEmpty(item.ArrivalTime) ){
+                        let [h, m, s] =  item.ArrivalTime.split(":").map(Number);
+                        let date = new Date(0, 0, 0, h, m, s);
+                        date.setHours(date.getHours() + 1);
+                        const pad = n => n.toString().padStart(2, "0");
+                        expectedArrival = `${date.getHours()}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                    }
 
                     arrivalDiv.innerHTML = ` 
                  <div class="departure">
-                  <p class="destination"><span>${destination} - ${expectedArrival}</span></p>
+                  <p class="destination"><span>${destination} (${item?.SetNo}) - ${expectedArrival}</span></p>
                   <p class="time-left"><span>${timeToStation} mins</span></p>
                  </div>
                  <div class="departure">
