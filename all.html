@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tube</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000000;
+            color: #ff9729;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            font-weight: 400;
+            line-height: 1.5;
+            font-size: 1.4em;
+
+        }
+
+        .station-name {
+            font-weight: bold;
+        }
+
+        .time-left {
+            color: red;
+        }
+
+        #arrivals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            padding: 0;
+            margin: 0;
+        }
+
+
+        .platform-section {
+            padding: 10px;
+            border-radius: 10px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        h3 {
+            color: red;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+            color: white;
+        }
+
+        .arrival-time {
+            padding: 10px;
+            background-color: #000;
+            border-bottom: 1px solid #555;
+            margin: 5px 0;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        .arrival-time p {
+            font-weight: bold;
+            margin: 5px 0;
+            line-height: 1.5;
+            padding: 10px;
+            background-color: #000;
+            margin: 5px 0;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        .live-location {
+
+            font-weight: light;
+            color: green;
+        }
+
+        .departure {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .departure p {
+            margin: 0;
+            padding: 0;
+        }
+
+        .journeyContainer {
+
+            display: flex;
+        }
+
+        .journey {
+            padding: 10px;
+            text-align: left;
+            font-size: 1em;
+        }
+
+        @media (max-width: 900px) {
+
+
+            .journeyContainer {
+
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+
+
+
+        @media (max-width: 768px) {
+
+            #arrivals {
+                grid-template-columns: 1fr;
+            }
+
+
+            .journeyContainer {
+
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+
+        <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
+    </div>
+    <span class="station-name">Stepney Green Live</span>
+    <div id="arrivals"></div>
+    <h3>Marriot Tube + Bus Live</h3>
+    <div class="journeyContainer" id="journeyContainer1"></div>
+
+    <h3>Marriot 5am Tube only</h3>
+    <div class="journeyContainer" id="journeyContainer"></div>
+
+    <h3>Marriot 5am Bus only</h3>
+    <div class="journeyContainer" id="journeyContainer2"></div>
+
+
+    <script>
+
+        function xmlToJson(xml) {
+            // Create the return object
+            var obj = {};
+
+            if (xml.nodeType == 1) {
+                // element
+                // do attributes
+                if (xml.attributes.length > 0) {
+                    obj["@attributes"] = {};
+                    for (var j = 0; j < xml.attributes.length; j++) {
+                        var attribute = xml.attributes.item(j);
+                        obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+                    }
+                }
+            } else if (xml.nodeType == 3) {
+                // text
+                obj = xml.nodeValue;
+            }
+
+            // do children
+            // If all text nodes inside, get concatenated text from them.
+            var textNodes = [].slice.call(xml.childNodes).filter(function (node) {
+                return node.nodeType === 3;
+            });
+            if (xml.hasChildNodes() && xml.childNodes.length === textNodes.length) {
+                obj = [].slice.call(xml.childNodes).reduce(function (text, node) {
+                    return text + node.nodeValue;
+                }, "");
+            } else if (xml.hasChildNodes()) {
+                for (var i = 0; i < xml.childNodes.length; i++) {
+                    var item = xml.childNodes.item(i);
+                    var nodeName = item.nodeName;
+                    if (typeof obj[nodeName] == "undefined") {
+                        obj[nodeName] = xmlToJson(item);
+                    } else {
+                        if (typeof obj[nodeName].push == "undefined") {
+                            var old = obj[nodeName];
+                            obj[nodeName] = [];
+                            obj[nodeName].push(old);
+                        }
+                        obj[nodeName].push(xmlToJson(item));
+                    }
+                }
+            }
+            return obj;
+        }
+
+        // Function to update the live clock
+        function updateClock() {
+            const now = new Date();
+            const clockElement = document.getElementById('clock');
+            clockElement.textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000); // Update clock every second
+
+
+
+        // Fetch the live data every 30 seconds
+        function fetchArrivals() {
+            fetch('https://api.tfl.gov.uk/TrackerNet/PredictionSummary/H?app_key=f6de10a6e45f4c55b9e4de791bbc60c0')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(xmlString => {
+                    // Parse XML string into a DOM object
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+              
+              			const json = xmlToJson(xmlDoc);
+              
+   			const array = ['BKG', 'STG', 'ALD', 'UPK']
+               
+              try{
+              
+             			json.ROOT.S.forEach(item => { 
+                    
+                    if(array.includes(item['@attributes']?.Code)  ) { 
+                      
+                      updateArrivals(item, item['@attributes']?.N);
+                                                        
+                                                        }
+                    
+                  });
+                                               
+                                           
+                  
+                  }
+              catch (e) {
+              }
+
+                   
+
+                })
+                .catch(error => {
+                    arrivals.innerHTML = "<h2 style='color: red;'>Error fetching tube data</h2>";
+                    console.error('Error fetching data:', error)
+                });
+        }
+      
+      
+ 
+
+        // Function to update arrival times on the page
+        function updateArrivals(data, name) {
+            const arrivalsContainer = document.getElementById('arrivals');
+            //arrivalsContainer.innerHTML = ''; // Clear previous data
+
+            // Group the data by platform
+            const platforms = {};
+          
+            if(data.P.T == undefined || data.P.length == 0 ) {} 
+
+            data.P.forEach(item0 => {
+              	if(item0.T != undefined && item0.T.length > 0 )
+                platforms[item0['@attributes']?.N] = item0.T; 
+              else console.log(data)
+               
+            });
+
+            const sortedPlatforms = Object.keys(platforms).sort((a, b) => {
+
+                return a - b;
+            });
+          
+      
+
+
+            // Create platform sections and display the arrivals
+            sortedPlatforms.forEach(platform => {
+                const platformSection = document.createElement('div');
+                platformSection.classList.add('platform-section');
+
+                const platformHeader = document.createElement('h3');
+                platformHeader.textContent = platform + "- " + name ;
+                platformSection.appendChild(platformHeader);
+              
+     
+              
+              if( platforms[platform].length == 0 ) return;
+              
+              if( platforms[platform] == undefined ) return;
+
+
+                platforms[platform].forEach((item1, i) => {
+
+                    if (i > 4) {
+                        return;
+                    }
+                    const arrivalDiv = document.createElement('div');
+                    arrivalDiv.classList.add('arrival-time');
+                    const item = item1['@attributes'];
+
+                
+                    const destination = item.DE?.replace("Underground Station", "") || 'Destination Unknown';
+                    const currentLocation = item.L || 'Location Unknown';
+                    const timeToStation = Math.floor(item.ST / 60) || 0;
+                    const isEmpty = (str) => (!str?.length);
+                    var expectedArrival = "Now";
+                    
+                    if(!isEmpty(item.AT) ){
+                        let [h, m, s] =  item.AT.split(":").map(Number);
+                        let date = new Date(0, 0, 0, h, m, s);
+                        date.setHours(date.getHours() + 1);
+                        const pad = n => n.toString().padStart(2, "0");
+                        expectedArrival = `${date.getHours()}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                    }
+
+                    arrivalDiv.innerHTML = ` 
+                 <div class="departure">
+                  <p class="destination"><span>${destination} (${item?.S}) - ${expectedArrival}</span></p>
+                  <p class="time-left"><span>${item.C}'</span></p>
+                 </div>
+                 <div class="departure">
+                  <p class="live-location">Live: <span>${currentLocation || 'N/A'}</span></p>
+                 </div>
+              `;
+
+                    platformSection.appendChild(arrivalDiv);
+                });
+
+                arrivalsContainer.appendChild(platformSection);
+            });
+        }
+
+
+        // Initial data fetch
+        fetchArrivals();
+        //setInterval(fetchArrivals, 50000);  // Fetch data every 30 seconds
+
+    </script>
+    <script>
+        async function fetchJourneys(api, containerName) {
+            const container = document.getElementById(containerName);
+            try {
+                const response = await fetch(api);
+                const data = await response.json();
+                displayJourneys(data.journeys, container);
+            } catch (error) {
+                console.error("Error fetching journey data:", error);
+                container.innerHTML = "Failed to load journey data.";
+            }
+        }
+
+        function displayJourneys(journeys, container) {
+            container.innerHTML = "";
+
+
+
+            if (!journeys || journeys.length === 0) {
+                container.innerHTML = "No journeys available.";
+                return;
+            }
+
+            journeys.forEach(journey => {
+                const journeyDiv = document.createElement("div");
+                journeyDiv.className = "journey";
+
+                const startTime = new Date(journey.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const arrivalTime = new Date(journey.arrivalDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                journeyDiv.innerHTML = `
+                 
+                     <p> <strong> ${startTime} - ${arrivalTime} </strong>  <span class="time-left"> ( ${journey.duration}' )</span></p>
+         </h3>
+                     <div class="legs">
+                         ${journey.legs.map((leg, i) => `
+                             <p>• ${leg.instruction.summary}  ${new Date(leg.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${leg.duration}')</p>
+                         `).join("")}
+                     </div>
+                 `;
+
+                container.appendChild(journeyDiv);
+            });
+        }
+
+        const API_URL_now = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=bus,tube&walkingSpeed=fast&useRealTimeLiveArrivals=true";
+        const API_URL_5AM_tube = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=20";
+        const API_URL_5AM_Bus = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube,bus&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=12";
+
+      
+    </script>
+
+    <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
+        <button id="cogBtn"
+            style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
+        <div id="sliderContainer"
+            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:0.4em;">
+            <label for="fontSlider">Font Size:</label>
+            <input type="range" id="fontSlider" min="0.8" max="6" step="0.1">
+        </div>
+    </div>
+
+    <script>
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(cname) === 0) {
+                    return c.substring(cname.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        // --- Font Size Control ---
+        const fontSlider = document.getElementById("fontSlider");
+        const sliderContainer = document.getElementById("sliderContainer");
+        const cogBtn = document.getElementById("cogBtn");
+
+        // Update on slider change
+        fontSlider.addEventListener("input", (e) => {
+            applyFontSize(e.target.value);
+        });
+
+
+        function applyFontSize(size) {
+            document.body.style.fontSize = size + "em";
+            setCookie("fontSize", size, 30); // save for 30 days
+        }
+
+        // Load saved font size
+        addEventListener("DOMContentLoaded", () => {
+
+            let savedSize = getCookie("fontSize");
+
+            if (savedSize) {
+                document.body.style.fontSize = savedSize + "em";
+                fontSlider.value = savedSize;
+            } else {
+                fontSlider.value = 1; // default
+            }
+        });
+
+        cogBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            sliderContainer.style.display = sliderContainer.style.display === "none" ? "block" : "none";
+        });
+
+        // Hide slider when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!document.getElementById("fontControls").contains(e.target)) {
+                sliderContainer.style.display = "none";
+            }
+        });
+
+    </script>
+</body>
+
+</html>
