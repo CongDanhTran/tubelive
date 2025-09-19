@@ -241,7 +241,9 @@
             const platforms = {};
 
             data.ROOT.S.P.forEach(item0 => {
+                if(item0.T.length > 0) {
                 platforms[item0['@attributes'].N] = item0.T??[];
+                }
                
             });
 
@@ -261,6 +263,7 @@
                 platformSection.appendChild(platformHeader);
 
 
+
                 platforms[platform].forEach((item1, i) => {
 
                     if (i > 4) {
@@ -275,7 +278,7 @@
                     const currentLocation = item.Location || 'Location Unknown';
                     const timeToStation = Math.floor(item.SecondsTo / 60) || 0;
                     const isEmpty = (str) => (!str?.length);
-                    var expectedArrival = "Now";
+                    var expectedArrival = "Unknown";
                     
                     if(!isEmpty(item.ArrivalTime) ){
                         let [h, m, s] =  item.ArrivalTime.split(":").map(Number);
