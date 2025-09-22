@@ -342,7 +342,7 @@
 
         // Initial data fetch
         fetchArrivals();
-        //setInterval(fetchArrivals, 50000);  // Fetch data every 30 seconds
+        setInterval(fetchArrivals, 30000);  // Fetch data every 30 seconds
 
     </script>
     <script>
@@ -394,7 +394,14 @@
         const API_URL_5AM_tube = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=20";
         const API_URL_5AM_Bus = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube,bus&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=12";
 
-      
+      fetchJourneys(API_URL_5AM_tube, "journeyContainer");
+        setInterval(fetchJourneys(API_URL_5AM_tube, "journeyContainer"), 120000);
+
+        fetchJourneys(API_URL_5AM_Bus, "journeyContainer2");
+        setInterval(fetchJourneys(API_URL_5AM_Bus, "journeyContainer2"), 120000);
+
+        fetchJourneys(API_URL_now, "journeyContainer1");
+        setInterval(fetchJourneys(API_URL_now, "journeyContainer1"), 20000);
     </script>
 
     <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
