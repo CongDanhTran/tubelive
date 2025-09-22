@@ -315,7 +315,7 @@
                     var expectedArrival = "Now";
                     
                     if(!isEmpty(item.AT) ){
-                        let [h, m, s] =  item.AT.split(":").map(Number);
+                        let [h, m, s] =  item.DT.split(":").map(Number);
                         let date = new Date(0, 0, 0, h, m, s);
                         date.setHours(date.getHours() + 1);
                         const pad = n => n.toString().padStart(2, "0");
