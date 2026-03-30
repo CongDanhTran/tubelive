@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tube</title>
+
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #ff9729;
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        #clock {
+            position: fixed;
+            top: 5px;
+            right: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        .station-block {
+            border-bottom: 2px solid #222;
+            padding: 15px;
+        }
+
+        .station-name {
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .platforms {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 10px;
+        }
+
+        .platform-section {
+            background: #111;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        h3 {
+            margin: 0;
+            color: #fff;
+        }
+
+        .arrival-time {
+            border-bottom: 1px solid #444;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .departure {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .time-left {
+            color: red;
+        }
+
+        .live-location {
+            color: #0f0;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="clock"></div>
+    <div id="arrivals"></div>
+
+    <script>
+        setInterval(() => {
+            document.getElementById("clock").textContent =
+                new Date().toLocaleTimeString();
+        }, 1000);
+
+        // Map TfL arrivals to platform dictionary
+        function mapTfl(arrivals) {
+            const platformsMap = {};
+
+            arrivals.forEach(a => {
+                const platform = a.platformName || "Unknown";
+
+                if (!platformsMap[platform]) {
+                    platformsMap[platform] = [];
+                }
+
+                platformsMap[platform].push({
+                    "@attributes": {
+                        Destination: a.destinationName || "Unknown",
+                        Location: a.currentLocation || "",
+                        SecondsTo: a.timeToStation || 0
+                    }
+                });
+            });
+
+            Object.values(platformsMap).forEach(arr =>
+                arr.sort((a, b) =>
+                    a["@attributes"].SecondsTo - b["@attributes"].SecondsTo
+                )
+            );
+
+            return platformsMap;
+        }
+
+        // Render ONE station
+        function renderStation(stationName, distance, platforms) {
+            const container = document.getElementById("arrivals");
+
+            const stationDiv = document.createElement("div");
+            stationDiv.className = "station-block";
+
+            stationDiv.innerHTML = `
+        <div class="station-name">
+            ${stationName} (${Math.round(distance)}m)
+        </div>
+    `;
+
+            const platformsDiv = document.createElement("div");
+            platformsDiv.className = "platforms";
+
+            Object.entries(platforms).forEach(([platform, arrivals]) => {
+                const platformDiv = document.createElement("div");
+                platformDiv.className = "platform-section";
+
+                platformDiv.innerHTML = `<h3>${platform}</h3>`;
+
+                arrivals.slice(0, 4).forEach(a => {
+                    const item = a["@attributes"];
+                    const minutes = Math.floor(item.SecondsTo / 60);
+                    const destination = item.Destination?.replace("Underground Station", "") || 'Destination Unknown';
+
+                    const div = document.createElement("div");
+                    div.className = "arrival-time";
+
+                    div.innerHTML = `
+                <div class="departure">
+                    <span>${destination}</span>
+                    <span class="time-left">${minutes} min</span>
+                </div>
+                <div class="live-location">
+                    ${item.Location || ''}
+                </div>
+            `;
+
+                    platformDiv.appendChild(div);
+                });
+
+                platformsDiv.appendChild(platformDiv);
+            });
+
+            stationDiv.appendChild(platformsDiv);
+            container.appendChild(stationDiv);
+        }
+
+        // Fetch + render multiple stations
+        async function fetchArrivals() {
+            try {
+                const pos = await new Promise((res, rej) =>
+                    navigator.geolocation.getCurrentPosition(res, rej)
+                );
+
+                const { latitude, longitude } = pos.coords;
+
+                const stopsRes = await fetch(
+                    `https://api.tfl.gov.uk/StopPoint?lat=${latitude}&lon=${longitude}&stopTypes=NaptanMetroStation&radius=500`
+                );
+                const stopsData = await stopsRes.json();
+
+                const stations = (stopsData.stopPoints || [])
+                    .sort((a, b) => a.distance - b.distance)
+                    .slice(0, 5); // limit to 5 stations
+
+                const container = document.getElementById("arrivals");
+                container.innerHTML = "";
+
+                for (const station of stations) {
+                    const arrivalsRes = await fetch(
+                        `https://api.tfl.gov.uk/StopPoint/${station.id}/Arrivals`
+                    );
+                    const arrivals = await arrivalsRes.json();
+
+                    if (!arrivals.length) continue;
+
+                    const platforms = mapTfl(arrivals);
+
+                    renderStation(
+                        station.commonName,
+                        station.distance,
+                        platforms
+                    );
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("arrivals").innerHTML =
+                    "Location permission required.";
+            }
+        }
+
+        fetchArrivals();
+        setInterval(fetchArrivals, 20000);
+    </script>
+
+</body>
+
+</html>
