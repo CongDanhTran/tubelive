@@ -4,7 +4,7 @@
   "display": "standalone",
   "name": "Nearby",
   "orientation": "any",
-  "scope": "/",
+  "scope": "/nearby",
   "short_name": "Nearby",
   "start_url": "/nearby",
   "theme_color": "#ffffff",
