@@ -367,7 +367,7 @@
                 }
                 if (!pos || !pos?.coords || pos?.coords?.latitude === 0 || pos?.coords?.longitude === 0) {
                     pos = await new Promise((res, rej) =>
-                        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
+                        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 19000 })
                     );
                 }
                 if (!locationInterval) {
@@ -387,7 +387,16 @@
 
                 container.innerHTML = "";
 
+                if (!navigator.onLine) {
+                    status.textContent = "No internet connection";
+                    return;
+                }
+
                 for (const station of stations) {
+                    if (!navigator.onLine) {
+                        status.textContent = "No internet connection";
+                        return;
+                    }
                     const arrivalsRes = await fetch(
                         `https://api.tfl.gov.uk/StopPoint/${station.id}/Arrivals`
                     );
