@@ -352,6 +352,8 @@
             }
         });
 
+        let locationInterval;
+
         // Fetch + render multiple stations
         async function fetchArrivals() {
             try {
@@ -360,8 +362,9 @@
                         navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
                     );
                 }
-
-                setInterval(fetchLocation, 30000);
+                if (!locationInterval) {
+                    locationInterval = setInterval(await fetchLocation, 30000);
+                }
 
                 const { latitude, longitude } = pos.coords;
 
@@ -414,7 +417,7 @@
         fetchArrivals();
         setInterval(fetchArrivals, 20000);
 
-        function fetchLocation() {
+        async function fetchLocation() {
             pos = new Promise((res, rej) =>
                 navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
             )
