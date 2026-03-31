@@ -77,8 +77,9 @@
 
 <body>
     <button id="reloadBtn">🔄 Refresh</button>
+    <div style="color: red; font-weight: bold; text-align: center;" id="status"></div>
     <div id="clock"></div>
-    <div id="arrivals"></div>
+    <div id="arrivals">Getting location...</div>
 
 
     <!-- Cog settings panel -->
@@ -203,6 +204,7 @@
         const sliderContainer = document.getElementById("sliderContainer");
         const cogBtn = document.getElementById("cogBtn");
         const container = document.getElementById("arrivals");
+        const status = document.getElementById("status");
 
         fontSlider.addEventListener("input", (e) => {
             document.body.style.fontSize = e.target.value + "em";
@@ -333,9 +335,11 @@
             leaveTime = Date.now();
         }
 
-        function handleShow() {
-            if (leaveTime !== null && (Date.now() - leaveTime) > 600000) {
+        async function handleShow() {
+            if (leaveTime !== null && (Date.now() - leaveTime) > 300000) {
                 pos = null;
+                locationInterval = null;
+                await fetchArrivals();
             }
             leaveTime = null;
             console.log("handleShow");
@@ -357,6 +361,10 @@
         // Fetch + render multiple stations
         async function fetchArrivals() {
             try {
+                if (!navigator.onLine) {
+                    status.textContent = "No internet connection";
+                    return;
+                }
                 if (!pos || !pos?.coords || pos?.coords?.latitude === 0 || pos?.coords?.longitude === 0) {
                     pos = await new Promise((res, rej) =>
                         navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
@@ -399,6 +407,8 @@
                         return;
                     }
 
+                    status.textContent = "";
+
                     renderStation(
                         station.commonName,
                         station.distance,
@@ -407,7 +417,8 @@
                 }
 
             } catch (err) {
-                window.location.reload();
+                //location.reload();
+                status.textContent = "No internet connection or cannot get location ";
                 console.error(err);
                 document.getElementById("arrivals").innerHTML =
                     "Location permission required.";
