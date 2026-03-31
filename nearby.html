@@ -138,6 +138,7 @@
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Page cached!';
                 } catch (err) {
+                    alert(err);
                     cacheStatus.style.color = 'red';
                     cacheStatus.textContent = '✗ Reload page first';
                 }
