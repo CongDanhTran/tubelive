@@ -402,6 +402,7 @@
                 }
 
             } catch (err) {
+                window.location.reload();
                 console.error(err);
                 document.getElementById("arrivals").innerHTML =
                     "Location permission required.";
