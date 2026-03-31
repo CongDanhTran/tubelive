@@ -326,6 +326,31 @@
         }
 
         let pos = null;
+        let leaveTime = null;
+
+        // Handle page hide/show and visibility change
+        function handleHide() {
+            leaveTime = Date.now();
+        }
+
+        function handleShow() {
+            if (leaveTime !== null && (Date.now() - leaveTime) > 120000) {
+                pos = null;
+            }
+            leaveTime = null;
+            console.log("handleShow");
+            console.log(pos);
+            console.log(leaveTime);
+        }
+
+        document.addEventListener('pagehide', handleHide);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                handleHide();
+            } else {
+                handleShow();
+            }
+        });
 
         // Fetch + render multiple stations
         async function fetchArrivals() {
