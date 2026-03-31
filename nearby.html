@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Tube</title>
+    <link rel="manifest" href="manifest_1.json">
 
     <style>
         body {
@@ -79,6 +80,136 @@
     <div id="clock"></div>
     <div id="arrivals"></div>
 
+
+    <!-- Cog settings panel -->
+    <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
+        <button id="cogBtn"
+            style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
+        <div id="sliderContainer"
+            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:0.4em; min-width: 200px;">
+            <label for="fontSlider">Font Size:</label>
+            <input type="range" id="fontSlider" min="0.8" max="6" step="0.1">
+            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <button class="cache-btn" id="recacheBtn">🔄 Re-cache page</button>
+            <button class="cache-btn" id="clearCacheBtn">🗑️ Clear cache</button>
+            <div id="cacheStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('SW registered:', reg.scope))
+                .catch(err => console.warn('SW registration failed:', err));
+        }
+
+        // Send a message to the active SW using a MessageChannel for a reply
+        function sendSwMessage(msg) {
+            return new Promise((resolve, reject) => {
+                if (!navigator.serviceWorker.controller) {
+                    reject('No active service worker');
+                    return;
+                }
+                const channel = new MessageChannel();
+                channel.port1.onmessage = e => resolve(e.data);
+                navigator.serviceWorker.controller.postMessage(msg, [channel.port2]);
+            });
+        }
+
+        // Cache controls
+        const cacheStatus = document.getElementById('cacheStatus');
+
+        document.getElementById('recacheBtn').addEventListener('click', async () => {
+            cacheStatus.style.color = '#ff9729';
+            cacheStatus.textContent = 'Caching...';
+            try {
+                const result = await sendSwMessage('RECACHE');
+                cacheStatus.style.color = '#0f0';
+                cacheStatus.textContent = '✓ Page cached!';
+            } catch (e) {
+                // Fallback if SW not yet controlling the page
+                try {
+                    const cache = await caches.open('stepney-green-v1');
+                    await cache.add('/');
+                    cacheStatus.style.color = '#0f0';
+                    cacheStatus.textContent = '✓ Page cached!';
+                } catch (err) {
+                    cacheStatus.style.color = 'red';
+                    cacheStatus.textContent = '✗ Reload page first';
+                }
+            }
+        });
+
+        document.getElementById('clearCacheBtn').addEventListener('click', async () => {
+            cacheStatus.style.color = '#ff9729';
+            cacheStatus.textContent = 'Clearing...';
+            try {
+                const result = await sendSwMessage('CLEAR_CACHE');
+                cacheStatus.style.color = '#0f0';
+                cacheStatus.textContent = '✓ Cache cleared!';
+            } catch (e) {
+                try {
+                    await caches.delete('stepney-green-v1');
+                    cacheStatus.style.color = '#0f0';
+                    cacheStatus.textContent = '✓ Cache cleared!';
+                } catch (err) {
+                    cacheStatus.style.color = 'red';
+                    cacheStatus.textContent = '✗ Failed';
+                }
+            }
+        });
+
+        // --- Font Size Control ---
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + "=" + value + ";expires=" + d.toUTCString() + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const ca = decodeURIComponent(document.cookie).split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(cname) === 0) return c.substring(cname.length);
+            }
+            return "";
+        }
+
+        const fontSlider = document.getElementById("fontSlider");
+        const sliderContainer = document.getElementById("sliderContainer");
+        const cogBtn = document.getElementById("cogBtn");
+
+        fontSlider.addEventListener("input", (e) => {
+            document.body.style.fontSize = e.target.value + "em";
+            setCookie("fontSize", e.target.value, 30);
+        });
+
+        addEventListener("DOMContentLoaded", () => {
+            let savedSize = getCookie("fontSize");
+            if (savedSize) {
+                document.body.style.fontSize = savedSize + "em";
+                fontSlider.value = savedSize;
+            } else {
+                fontSlider.value = 1;
+            }
+        });
+
+        cogBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = sliderContainer.style.display !== "none";
+            sliderContainer.style.display = isOpen ? "none" : "block";
+            if (!isOpen) cacheStatus.textContent = '';
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!document.getElementById("fontControls").contains(e.target)) {
+                sliderContainer.style.display = "none";
+            }
+        });
+    </script>
+
     <script>
         setInterval(() => {
             document.getElementById("clock").textContent =
@@ -87,6 +218,7 @@
 
         // Map TfL arrivals to platform dictionary
         function mapTfl(arrivals) {
+            if (arrivals.length === 0) return;
             const platformsMap = {};
 
             arrivals.forEach(a => {
@@ -191,9 +323,23 @@
                     );
                     const arrivals = await arrivalsRes.json();
 
-                    if (!arrivals.length) continue;
+                    if (!arrivals.length) {
+                        console.log("No arrivals for station: " + station.commonName);
+                        const container = document.getElementById("arrivals");
+                        container.innerHTML = "No arrivals for station: " + station.commonName;
+                        return;
+                    }
 
                     const platforms = mapTfl(arrivals);
+
+                    console.log(platforms);
+
+                    if (platforms === undefined) {
+                        console.log("No arrivals for station: " + station.commonName);
+                        const container = document.getElementById("arrivals");
+                        container.innerHTML = "No arrivals for station: " + station.commonName;
+                        return;
+                    }
 
                     renderStation(
                         station.commonName,
