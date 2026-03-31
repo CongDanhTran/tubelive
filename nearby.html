@@ -132,6 +132,9 @@
                 try {
                     const cache = await caches.open('stepney-green-v1');
                     await cache.add('/');
+                    await cache.add('/nearby');
+                    await cache.add('/manifest_1.json');
+                    await cache.add('/icon.png');
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Page cached!';
                 } catch (err) {
