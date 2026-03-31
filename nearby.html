@@ -355,11 +355,13 @@
         // Fetch + render multiple stations
         async function fetchArrivals() {
             try {
-                if (!pos || (pos.coords.latitude === 0 && pos.coords.longitude === 0)) {
+                if (!pos || !pos?.coords || pos?.coords?.latitude === 0 || pos?.coords?.longitude === 0) {
                     pos = await new Promise((res, rej) =>
-                        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 })
+                        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
                     );
                 }
+
+                setInterval(fetchLocation, 30000);
 
                 const { latitude, longitude } = pos.coords;
 
@@ -411,6 +413,14 @@
 
         fetchArrivals();
         setInterval(fetchArrivals, 20000);
+
+        function fetchLocation() {
+            pos = new Promise((res, rej) =>
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
+            )
+
+            console.log("Location fetched at " + new Date().toLocaleTimeString());
+        }
     </script>
 
 </body>
