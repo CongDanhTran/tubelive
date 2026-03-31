@@ -96,150 +96,6 @@
             <div id="cacheStatus"></div>
         </div>
     </div>
-
-    <script>
-        // --- Service Worker Registration ---
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => {
-                    console.log('SW registered:', reg.scope);
-
-                    // Listen for messages from the service worker
-                    navigator.serviceWorker.addEventListener('message', event => {
-                        if (event.data && event.data.type === 'SW_UPDATE_AVAILABLE') {
-                            // Notify user that an update is available
-                            if (confirm('A new version of the app is available. Would you like to reload now?')) {
-                                window.location.reload();
-                            }
-                        }
-
-                        // Handle other message types if needed
-                        if (event.data && event.data.type === 'SW_UPDATE_CHECKED_ONLINE') {
-                            console.log('Service worker update check completed');
-                        }
-                    });
-                })
-                .catch(err => console.warn('SW registration failed:', err));
-        }
-
-        // Send a message to the active SW using a MessageChannel for a reply
-        function sendSwMessage(msg) {
-            return new Promise((resolve, reject) => {
-                if (!navigator.serviceWorker.controller) {
-                    reject('No active service worker');
-                    return;
-                }
-                const channel = new MessageChannel();
-                channel.port1.onmessage = e => resolve(e.data);
-                navigator.serviceWorker.controller.postMessage(msg, [channel.port2]);
-            });
-        }
-
-        // Cache controls
-        const cacheStatus = document.getElementById('cacheStatus');
-
-        document.getElementById('recacheBtn').addEventListener('click', async () => {
-            cacheStatus.style.color = '#ff9729';
-            cacheStatus.textContent = 'Caching...';
-            try {
-                const result = await sendSwMessage('RECACHE');
-                cacheStatus.style.color = '#0f0';
-                cacheStatus.textContent = '✓ Page cached!';
-            } catch (e) {
-                // Fallback if SW not yet controlling the page
-                try {
-                    const cache = await caches.open('stepney-green-v3');
-                    await cache.add('/nearby');
-                    await cache.add('/manifest_1.json');
-                    await cache.add('/192-192.png');
-                    await cache.add('/512-512.png');
-                    cacheStatus.style.color = '#0f0';
-                    cacheStatus.textContent = '✓ Page cached!';
-                    window.location.reload();
-                } catch (err) {
-                    alert(err);
-                    cacheStatus.style.color = 'red';
-                    cacheStatus.textContent = '✗ Reload page first';
-                }
-            }
-        });
-
-        document.getElementById('clearCacheBtn').addEventListener('click', async () => {
-            cacheStatus.style.color = '#ff9729';
-            cacheStatus.textContent = 'Clearing...';
-            try {
-                const result = await sendSwMessage('CLEAR_CACHE');
-                cacheStatus.style.color = '#0f0';
-                cacheStatus.textContent = '✓ Cache cleared!';
-            } catch (e) {
-                try {
-                    await caches.delete('stepney-green-v1');
-                    cacheStatus.style.color = '#0f0';
-                    cacheStatus.textContent = '✓ Cache cleared!';
-                } catch (err) {
-                    cacheStatus.style.color = 'red';
-                    cacheStatus.textContent = '✗ Failed';
-                }
-            }
-        });
-
-        // --- Font Size Control ---
-        function setCookie(name, value, days) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = name + "=" + value + ";expires=" + d.toUTCString() + ";path=/";
-        }
-
-        function getCookie(name) {
-            const cname = name + "=";
-            const ca = decodeURIComponent(document.cookie).split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i].trim();
-                if (c.indexOf(cname) === 0) return c.substring(cname.length);
-            }
-            return "";
-        }
-
-        const fontSlider = document.getElementById("fontSlider");
-        const sliderContainer = document.getElementById("sliderContainer");
-        const cogBtn = document.getElementById("cogBtn");
-        const container = document.getElementById("arrivals");
-        const status = document.getElementById("status");
-
-        fontSlider.addEventListener("input", (e) => {
-            document.body.style.fontSize = e.target.value + "em";
-            setCookie("fontSize", e.target.value, 30);
-        });
-
-        addEventListener("DOMContentLoaded", () => {
-            let savedSize = getCookie("fontSize");
-            if (savedSize) {
-                document.body.style.fontSize = savedSize + "em";
-                fontSlider.value = savedSize;
-            } else {
-                fontSlider.value = 1;
-            }
-        });
-
-        cogBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const isOpen = sliderContainer.style.display !== "none";
-            sliderContainer.style.display = isOpen ? "none" : "block";
-            if (!isOpen) cacheStatus.textContent = '';
-        });
-
-        document.addEventListener("click", (e) => {
-            if (!document.getElementById("fontControls").contains(e.target)) {
-                sliderContainer.style.display = "none";
-            }
-        });
-
-        // Reload button functionality
-        document.getElementById('reloadBtn').addEventListener('click', () => {
-            window.location.reload();
-        });
-    </script>
-
     <script>
         setInterval(() => {
             document.getElementById("clock").textContent =
@@ -447,6 +303,150 @@
             }
         }
     </script>
+
+    <script>
+        // --- Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => {
+                    console.log('SW registered:', reg.scope);
+
+                    // Listen for messages from the service worker
+                    navigator.serviceWorker.addEventListener('message', event => {
+                        if (event.data && event.data.type === 'SW_UPDATE_AVAILABLE') {
+                            // Notify user that an update is available
+                            if (confirm('A new version of the app is available. Would you like to reload now?')) {
+                                window.location.reload();
+                            }
+                        }
+
+                        // Handle other message types if needed
+                        if (event.data && event.data.type === 'SW_UPDATE_CHECKED_ONLINE') {
+                            console.log('Service worker update check completed');
+                        }
+                    });
+                })
+                .catch(err => console.warn('SW registration failed:', err));
+        }
+
+        // Send a message to the active SW using a MessageChannel for a reply
+        function sendSwMessage(msg) {
+            return new Promise((resolve, reject) => {
+                if (!navigator.serviceWorker.controller) {
+                    reject('No active service worker');
+                    return;
+                }
+                const channel = new MessageChannel();
+                channel.port1.onmessage = e => resolve(e.data);
+                navigator.serviceWorker.controller.postMessage(msg, [channel.port2]);
+            });
+        }
+
+        // Cache controls
+        const cacheStatus = document.getElementById('cacheStatus');
+
+        document.getElementById('recacheBtn').addEventListener('click', async () => {
+            cacheStatus.style.color = '#ff9729';
+            cacheStatus.textContent = 'Caching...';
+            try {
+                const result = await sendSwMessage('RECACHE');
+                cacheStatus.style.color = '#0f0';
+                cacheStatus.textContent = '✓ Page cached!';
+            } catch (e) {
+                // Fallback if SW not yet controlling the page
+                try {
+                    const cache = await caches.open('stepney-green-v4');
+                    await cache.add('/nearby');
+                    await cache.add('/manifest_1.json');
+                    await cache.add('/192-192.png');
+                    await cache.add('/512-512.png');
+                    cacheStatus.style.color = '#0f0';
+                    cacheStatus.textContent = '✓ Page cached!';
+                    window.location.reload();
+                } catch (err) {
+                    alert(err);
+                    cacheStatus.style.color = 'red';
+                    cacheStatus.textContent = '✗ Reload page first';
+                }
+            }
+        });
+
+        document.getElementById('clearCacheBtn').addEventListener('click', async () => {
+            cacheStatus.style.color = '#ff9729';
+            cacheStatus.textContent = 'Clearing...';
+            try {
+                const result = await sendSwMessage('CLEAR_CACHE');
+                cacheStatus.style.color = '#0f0';
+                cacheStatus.textContent = '✓ Cache cleared!';
+            } catch (e) {
+                try {
+                    await caches.delete('stepney-green-v1');
+                    cacheStatus.style.color = '#0f0';
+                    cacheStatus.textContent = '✓ Cache cleared!';
+                } catch (err) {
+                    cacheStatus.style.color = 'red';
+                    cacheStatus.textContent = '✗ Failed';
+                }
+            }
+        });
+
+        // --- Font Size Control ---
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + "=" + value + ";expires=" + d.toUTCString() + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const ca = decodeURIComponent(document.cookie).split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(cname) === 0) return c.substring(cname.length);
+            }
+            return "";
+        }
+
+        const fontSlider = document.getElementById("fontSlider");
+        const sliderContainer = document.getElementById("sliderContainer");
+        const cogBtn = document.getElementById("cogBtn");
+        const container = document.getElementById("arrivals");
+        const status = document.getElementById("status");
+
+        fontSlider.addEventListener("input", (e) => {
+            document.body.style.fontSize = e.target.value + "em";
+            setCookie("fontSize", e.target.value, 30);
+        });
+
+        addEventListener("DOMContentLoaded", () => {
+            let savedSize = getCookie("fontSize");
+            if (savedSize) {
+                document.body.style.fontSize = savedSize + "em";
+                fontSlider.value = savedSize;
+            } else {
+                fontSlider.value = 1;
+            }
+        });
+
+        cogBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = sliderContainer.style.display !== "none";
+            sliderContainer.style.display = isOpen ? "none" : "block";
+            if (!isOpen) cacheStatus.textContent = '';
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!document.getElementById("fontControls").contains(e.target)) {
+                sliderContainer.style.display = "none";
+            }
+        });
+
+        // Reload button functionality
+        document.getElementById('reloadBtn').addEventListener('click', () => {
+            window.location.reload();
+        });
+    </script>
+
 
 </body>
 
