@@ -1,5 +1,5 @@
 const CACHE_NAME = 'stepney-green-v1';
-const CACHED_URLS = ['/', '/nearby', '/manifest.json', '/icon.png'];
+const CACHED_URLS = ['/', '/nearby', '/manifest.json'];
 
 // Install: cache the HTML shell
 self.addEventListener('install', event => {
