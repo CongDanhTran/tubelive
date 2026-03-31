@@ -19,8 +19,13 @@
             font-size: 1.4em;
         }
 
-        .station-name { font-weight: bold; }
-        .time-left { color: red; }
+        .station-name {
+            font-weight: bold;
+        }
+
+        .time-left {
+            color: red;
+        }
 
         #arrivals {
             display: grid;
@@ -68,22 +73,47 @@
             text-align: left;
         }
 
-        .live-location { font-weight: light; color: green; }
+        .live-location {
+            font-weight: light;
+            color: green;
+        }
 
-        .departure { display: flex; justify-content: space-between; }
-        .departure p { margin: 0; padding: 0; }
+        .departure {
+            display: flex;
+            justify-content: space-between;
+        }
 
-        .journeyContainer { display: flex; }
+        .departure p {
+            margin: 0;
+            padding: 0;
+        }
 
-        .journey { padding: 10px; text-align: left; font-size: 1em; }
+        .journeyContainer {
+            display: flex;
+        }
+
+        .journey {
+            padding: 10px;
+            text-align: left;
+            font-size: 1em;
+        }
 
         @media (max-width: 900px) {
-            .journeyContainer { display: grid; grid-template-columns: 1fr 1fr; }
+            .journeyContainer {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         @media (max-width: 768px) {
-            #arrivals { grid-template-columns: 1fr; }
-            .journeyContainer { display: grid; grid-template-columns: 1fr; }
+            #arrivals {
+                grid-template-columns: 1fr;
+            }
+
+            .journeyContainer {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Cog panel */
@@ -103,7 +133,9 @@
             box-sizing: border-box;
         }
 
-        .cache-btn:active { background: #333; }
+        .cache-btn:active {
+            background: #333;
+        }
 
         #cacheStatus {
             margin-top: 6px;
@@ -306,8 +338,10 @@
 
     <!-- Cog settings panel -->
     <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
-        <button id="cogBtn" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
-        <div id="sliderContainer" style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:0.4em; min-width: 200px;">
+        <button id="cogBtn"
+            style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
+        <div id="sliderContainer"
+            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:0.4em; min-width: 200px;">
             <label for="fontSlider">Font Size:</label>
             <input type="range" id="fontSlider" min="0.8" max="6" step="0.1">
             <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
@@ -321,7 +355,24 @@
         // --- Service Worker Registration ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW registered:', reg.scope))
+                .then(reg => {
+                    console.log('SW registered:', reg.scope);
+
+                    // Listen for messages from the service worker
+                    navigator.serviceWorker.addEventListener('message', event => {
+                        if (event.data && event.data.type === 'SW_UPDATE_AVAILABLE') {
+                            // Notify user that an update is available
+                            if (confirm('A new version of the app is available. Would you like to reload now?')) {
+                                window.location.reload();
+                            }
+                        }
+
+                        // Handle other message types if needed
+                        if (event.data && event.data.type === 'SW_UPDATE_CHECKED_ONLINE') {
+                            console.log('Service worker update check completed');
+                        }
+                    });
+                })
                 .catch(err => console.warn('SW registration failed:', err));
         }
 
@@ -351,10 +402,14 @@
             } catch (e) {
                 // Fallback if SW not yet controlling the page
                 try {
-                    const cache = await caches.open('stepney-green-v1');
-                    await cache.add('/');
+                    const cache = await caches.open('stepney-green-v2');
+                    await cache.add('/index');
+                    await cache.add('/manifest.json');
+                    await cache.add('/192-192.png');
+                    await cache.add('/512-512.png');
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Page cached!';
+                    window.location.reload();
                 } catch (err) {
                     cacheStatus.style.color = 'red';
                     cacheStatus.textContent = '✗ Reload page first';

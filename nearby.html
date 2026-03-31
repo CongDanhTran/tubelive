@@ -100,7 +100,24 @@
         // --- Service Worker Registration ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW registered:', reg.scope))
+                .then(reg => {
+                    console.log('SW registered:', reg.scope);
+
+                    // Listen for messages from the service worker
+                    navigator.serviceWorker.addEventListener('message', event => {
+                        if (event.data && event.data.type === 'SW_UPDATE_AVAILABLE') {
+                            // Notify user that an update is available
+                            if (confirm('A new version of the app is available. Would you like to reload now?')) {
+                                window.location.reload();
+                            }
+                        }
+
+                        // Handle other message types if needed
+                        if (event.data && event.data.type === 'SW_UPDATE_CHECKED_ONLINE') {
+                            console.log('Service worker update check completed');
+                        }
+                    });
+                })
                 .catch(err => console.warn('SW registration failed:', err));
         }
 
@@ -130,12 +147,14 @@
             } catch (e) {
                 // Fallback if SW not yet controlling the page
                 try {
-                    const cache = await caches.open('stepney-green-v1');
-                    await cache.add('/');
+                    const cache = await caches.open('stepney-green-v2');
                     await cache.add('/nearby');
                     await cache.add('/manifest_1.json');
+                    await cache.add('/192-192.png');
+                    await cache.add('/512-512.png');
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Page cached!';
+                    window.location.reload();
                 } catch (err) {
                     alert(err);
                     cacheStatus.style.color = 'red';
