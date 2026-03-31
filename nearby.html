@@ -364,7 +364,7 @@
                 const { latitude, longitude } = pos.coords;
 
                 const stopsRes = await fetch(
-                    `https://api.tfl.gov.uk/StopPoint?lat=${latitude}&lon=${longitude}&stopTypes=NaptanMetroStation&radius=500`
+                    `https://api.tfl.gov.uk/StopPoint?lat=${latitude}&lon=${longitude}&stopTypes=NaptanMetroStation&radius=1000`
                 );
                 const stopsData = await stopsRes.json();
 
