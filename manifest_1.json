@@ -3,7 +3,7 @@
   "dir": "ltr",
   "display": "standalone",
   "name": "Nearby",
-  "orientation": "any",
+  "orientation": "portrait",
   "scope": "/nearby",
   "short_name": "Nearby",
   "start_url": "/nearby",
