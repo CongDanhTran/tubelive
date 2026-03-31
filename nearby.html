@@ -371,7 +371,7 @@
                     );
                 }
                 if (!locationInterval) {
-                    locationInterval = setInterval(await fetchLocation, 30000);
+                    locationInterval = setInterval(await fetchLocation, 10000);
                 }
 
                 const { latitude, longitude } = pos.coords;
