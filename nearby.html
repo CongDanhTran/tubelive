@@ -191,8 +191,8 @@
             leaveTime = Date.now();
         }
 
-        async function handleShow() {
-            if (leaveTime !== null && (Date.now() - leaveTime) > 300000) {
+        async function handleShow(time = 300000) {
+            if (leaveTime !== null && (Date.now() - leaveTime) > time) {
                 pos = null;
                 locationInterval = null;
                 await fetchArrivals();
@@ -212,13 +212,18 @@
             }
         });
 
+        window.addEventListener('online', () => handleShow(20000));
+        window.addEventListener('offline', handleHide);
+
         let locationInterval;
+        let lastStopData = null;
+        let lastPos = null;
 
         // Fetch + render multiple stations
         async function fetchArrivals() {
             try {
                 if (!navigator.onLine) {
-                    status.textContent = "No internet connection";
+                    status.textContent = "No internet connection, retrying...";
                     return;
                 }
                 if (!pos || !pos?.coords || pos?.coords?.latitude === 0 || pos?.coords?.longitude === 0) {
@@ -232,25 +237,28 @@
 
                 const { latitude, longitude } = pos.coords;
 
-                const stopsRes = await fetch(
-                    `https://api.tfl.gov.uk/StopPoint?lat=${latitude}&lon=${longitude}&stopTypes=NaptanMetroStation&radius=1000`
-                );
-                const stopsData = await stopsRes.json();
+                if (lastPos && lastPos.latitude !== latitude && lastPos.longitude !== longitude || !lastStopData) {
+                    const stopsRes = await fetch(
+                        `https://api.tfl.gov.uk/StopPoint?lat=${latitude}&lon=${longitude}&stopTypes=NaptanMetroStation&radius=1000`
+                    );
+                    const stopsData = await stopsRes.json();
+                    lastStopData = stopsData;
+                    lastPos = { latitude, longitude };
+                }
 
-                const stations = (stopsData.stopPoints || [])
+                const stations = (lastStopData.stopPoints || [])
                     .sort((a, b) => a.distance - b.distance)
                     .slice(0, 5); // limit to 5 stations
-
-                container.innerHTML = "";
-
                 if (!navigator.onLine) {
                     status.textContent = "No internet connection";
                     return;
                 }
 
+                let atLeastOneStation = false;
+
                 for (const station of stations) {
                     if (!navigator.onLine) {
-                        status.textContent = "No internet connection";
+                        status.textContent = "No internet connection, retrying...";
                         return;
                     }
                     const arrivalsRes = await fetch(
@@ -273,6 +281,10 @@
                     }
 
                     status.textContent = "";
+                    if (!atLeastOneStation) {
+                        container.innerHTML = "";
+                        atLeastOneStation = true;
+                    }
 
                     renderStation(
                         station.commonName,
@@ -283,7 +295,7 @@
 
             } catch (err) {
                 //location.reload();
-                status.textContent = "Cannot get location ";
+                status.textContent = "Cannot get location, use last location";
                 console.error(err);
             }
         }
