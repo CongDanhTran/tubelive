@@ -418,7 +418,7 @@
 
             } catch (err) {
                 //location.reload();
-                status.textContent = "No internet connection or cannot get location ";
+                status.textContent = "Cannot get location ";
                 console.error(err);
             }
         }
@@ -427,11 +427,15 @@
         setInterval(fetchArrivals, 20000);
 
         async function fetchLocation() {
-            pos = new Promise((res, rej) =>
-                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
-            )
-
-            console.log("Location fetched at " + new Date().toLocaleTimeString());
+            try {
+                const newPos = await new Promise((res, rej) =>
+                    navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 })
+                )
+                pos = newPos;
+                console.log("Location fetched at " + new Date().toLocaleTimeString());
+            } catch (err) {
+                console.error(err);
+            }
         }
     </script>
 
