@@ -325,12 +325,16 @@
             container.appendChild(stationDiv);
         }
 
+        let pos = null;
+
         // Fetch + render multiple stations
         async function fetchArrivals() {
             try {
-                const pos = await new Promise((res, rej) =>
-                    navigator.geolocation.getCurrentPosition(res, rej)
-                );
+                if (!pos || (pos.coords.latitude === 0 && pos.coords.longitude === 0)) {
+                    pos = await new Promise((res, rej) =>
+                        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 })
+                    );
+                }
 
                 const { latitude, longitude } = pos.coords;
 
