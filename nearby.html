@@ -256,7 +256,7 @@
 
                 let atLeastOneStation = false;
 
-                for (const station of stations) {
+                stations.forEach(async (station) =>  {
                     if (!navigator.onLine) {
                         status.textContent = "No internet connection, retrying...";
                         return;
@@ -291,7 +291,7 @@
                         station.distance,
                         platforms
                     );
-                }
+                });
 
             } catch (err) {
                 //location.reload();
