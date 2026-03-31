@@ -1,5 +1,5 @@
 // Version of this service worker - increment when deploying updates
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE_NAME = `stepney-green-${VERSION}`;
 const CACHED_URLS = ['/', '/nearby', '/manifest.json', '/192-192.png', '/512-512.png', "manifest_1.json"];
 
