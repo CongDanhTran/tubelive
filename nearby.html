@@ -496,7 +496,7 @@
 
                 if (lastPos && lastPos.latitude !== latitude && lastPos.longitude !== longitude || !lastStopData) {
                     const stopsRes = await fetch(
-                        `https://api.tfl.gov.uk/StopPoint?lat=${latitude}&lon=${longitude}&stopTypes=NaptanMetroStation&radius=${window.radiusValue || 1000}`
+                        `https://api.tfl.gov.uk/StopPoint?lat=${latitude}&lon=${longitude}&stopTypes=NaptanMetroStation,NaptanRailStation&radius=${window.radiusValue || 1000}`
                     );
                     const stopsData = await stopsRes.json();
                     lastStopData = stopsData;
@@ -505,7 +505,7 @@
 
                 const stations = (lastStopData.stopPoints || [])
                     .sort((a, b) => parseInt(a.distance) - parseInt(b.distance))
-                    .slice(0, 8); // limit to 5 stations
+                    .slice(0, 9);
                 if (!navigator.onLine) {
                     status.textContent = "No internet connection";
                     return;
