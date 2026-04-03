@@ -515,7 +515,7 @@
         let timeFrom = localStorage.getItem('timeFrom') || '05:15:00';
         let timeTo = localStorage.getItem('timeTo') || '05:40:00';
         let checkInterval = parseInt(localStorage.getItem('checkInterval')) || 5;
-        
+
         const alert5amBtn = document.getElementById('alert5amBtn');
         const setNoInput = document.getElementById('setNoInput');
         const timeFromInput = document.getElementById('timeFromInput');
@@ -548,7 +548,7 @@
 
         function updateAlert5amBtn() {
             alert5amBtn.textContent = alert5amEnabled ? '🔕 5 AM Alert: ON' : '🔔 5 AM Alert: OFF';
-            alert5amBtn.style.color = alert5amEnabled ? '#0f0' : '#ff9729'; 
+            alert5amBtn.style.color = alert5amEnabled ? '#0f0' : '#ff9729';
         }
 
         alert5amBtn.addEventListener('click', async () => {
@@ -560,7 +560,7 @@
             localStorage.setItem('alert5amEnabled', alert5amEnabled);
             updateAlert5amBtn();
         });
-        
+
         updateAlert5amBtn();
 
         document.getElementById('test5amBtn').addEventListener('click', () => {
@@ -569,28 +569,34 @@
 
         function scheduleArrivalCheck() {
             const now = new Date();
+
+            // Parse custom time window
+            const [fromH, fromM, fromS] = timeFrom.split(':').map(Number);
+            const [toH, toM, toS] = timeTo.split(':').map(Number);
+
             const startCheck = new Date();
-            startCheck.setHours(5, 0, 0, 0);
+            startCheck.setHours(fromH, fromM, fromS || 0, 0);
+            // Buffer: start checking 10 mins before the "From" time to catch early updates
 
             const endCheck = new Date();
-            endCheck.setHours(5, 20, 0, 0);
+            endCheck.setHours(toH, toM, toS || 0, 0);
 
             let nextCheckTime;
 
             if (now < startCheck) {
-                // It's before 5:00 AM, wait until exactly 5:00 AM
+                // It's before the window, wait until start
                 nextCheckTime = startCheck;
             } else if (now >= startCheck && now <= endCheck) {
                 // It's in the window, check in custom minutes
                 nextCheckTime = new Date(now.getTime() + checkInterval * 60 * 1000);
-                
-                // If the next check is past the window end, schedule for tomorrow at 5:00 AM
+
+                // If next check is past the window end, schedule for tomorrow
                 if (nextCheckTime > endCheck) {
                     nextCheckTime = new Date(startCheck);
                     nextCheckTime.setDate(nextCheckTime.getDate() + 1);
                 }
             } else {
-                // It's after the window end, schedule for tomorrow at 5:00 AM
+                // It's after the window, schedule for tomorrow
                 nextCheckTime = new Date(startCheck);
                 nextCheckTime.setDate(nextCheckTime.getDate() + 1);
             }
@@ -603,7 +609,7 @@
                 if (alert5amEnabled && inWindow) {
                     performArrivalCheck();
                 }
-                scheduleArrivalCheck(); // Recursive call to plan next check
+                scheduleArrivalCheck(); // Recursive call
             }, delay);
         }
 
