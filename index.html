@@ -547,7 +547,7 @@
         });
 
         function updateAlert5amBtn() {
-            alert5amBtn.textContent = alert5amEnabled ? '🔕 5 AM Alert: ON' : '🔔 5 AM Alert: OFF';
+            alert5amBtn.textContent = alert5amEnabled ? '🔕 Alert: ON' : '🔔 Alert: OFF';
             alert5amBtn.style.color = alert5amEnabled ? '#0f0' : '#ff9729';
         }
 
@@ -612,6 +612,34 @@
                 scheduleArrivalCheck(); // Recursive call
             }, delay);
         }
+
+        // Check right away when tab is refocused or app first opens
+        function instantCheckIfInWindow() {
+            if (navigator.onLine) {
+                const now = new Date();
+                const [fromH, fromM, fromS] = timeFrom.split(':').map(Number);
+                const [toH, toM, toS] = timeTo.split(':').map(Number);
+
+                const winStart = new Date();
+                winStart.setHours(fromH, fromM, fromS || 0, 0);
+
+                const winEnd = new Date();
+                winEnd.setHours(toH, toM, toS || 0, 0);
+
+                // If currently in the monitoring period, trigger a check now
+                if (now >= winStart && now <= winEnd && alert5amEnabled) {
+                    console.log("Triggering instant check (App Load or Tab Refocused).");
+                    performArrivalCheck();
+                }
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') instantCheckIfInWindow();
+        });
+
+        // Initial check on page load
+        instantCheckIfInWindow();
 
         async function performArrivalCheck(force = false) {
             if (!alert5amEnabled && !force) return;
