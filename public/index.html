@@ -156,7 +156,7 @@
     <div>
         <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
     </div>
-    <span class="station-name">Stepney Green Live</span>
+    <span class="station-name">Live</span>
     <div id="arrivals"></div>
     <h3>Marriot Tube + Bus Live</h3>
     <div class="journeyContainer" id="journeyContainer1"></div>
@@ -286,6 +286,12 @@
             if (!data.ROOT || !data.ROOT.S || !data.ROOT.S.P || data.ROOT.S.P.filter(item0 => item0.T?.length > 0).length === 0) {
                 arrivalsContainer.innerHTML = '<h2 style="color: red;">No tube</h2>';
                 return;
+            }
+
+            const stationName = data.ROOT.S['@attributes'].N;
+
+            if (stationName && stationName !== "") {
+                document.querySelector('.station-name').textContent = stationName;
             }
 
             data.ROOT.S.P.forEach(item0 => {
