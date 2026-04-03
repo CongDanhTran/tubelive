@@ -148,6 +148,11 @@
 </head>
 
 <body>
+    <button onclick="location.reload()"
+        style="position:absolute;background: #1a1a1a;color: #ff9729;border: 1px solid #444;padding: 8px 15px;border-radius: 5px;font-family: 'Courier New', Courier, monospace;font-size: 0.6em;cursor: pointer;left: 0;top: 0;">
+        🔄
+    </button>
+
     <div>
         <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
     </div>
@@ -351,6 +356,14 @@
             <label for="setNoInput">Monitor Tube No:</label>
             <input type="text" id="setNoInput" value="205"
                 style="min-width: 20px; background: #222; color: #ff9729; border: 1px solid #444; padding: 5px; border-radius: 5px; box-sizing: border-box; margin-top: 4px;">
+            <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
+                <label style="font-size: 0.8em;">From:</label>
+                <input type="time" id="timeFromInput" step="1"
+                    style="background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                <label style="font-size: 0.8em;">To:</label>
+                <input type="time" id="timeToInput" step="1"
+                    style="background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+            </div>
             <button class="cache-btn" id="alert5amBtn">🔔 5 AM Alert: OFF</button>
             <button class="cache-btn" id="test5amBtn">🧪 Test 5 AM Alert</button>
             <div id="cacheStatus"></div>
@@ -494,14 +507,30 @@
         // --- 5 AM Automated Arrival Check ---
         let alert5amEnabled = localStorage.getItem('alert5amEnabled') === 'true';
         let monitoredSetNo = localStorage.getItem('monitoredSetNo') || '205';
+        let timeFrom = localStorage.getItem('timeFrom') || '05:15:00';
+        let timeTo = localStorage.getItem('timeTo') || '05:40:00';
 
         const alert5amBtn = document.getElementById('alert5amBtn');
         const setNoInput = document.getElementById('setNoInput');
+        const timeFromInput = document.getElementById('timeFromInput');
+        const timeToInput = document.getElementById('timeToInput');
 
         setNoInput.value = monitoredSetNo;
         setNoInput.addEventListener('change', (e) => {
             monitoredSetNo = e.target.value.trim();
             localStorage.setItem('monitoredSetNo', monitoredSetNo);
+        });
+
+        timeFromInput.value = timeFrom;
+        timeFromInput.addEventListener('change', (e) => {
+            timeFrom = e.target.value;
+            localStorage.setItem('timeFrom', timeFrom);
+        });
+
+        timeToInput.value = timeTo;
+        timeToInput.addEventListener('change', (e) => {
+            timeTo = e.target.value;
+            localStorage.setItem('timeTo', timeTo);
         });
 
         function updateAlert5amBtn() {
@@ -542,13 +571,13 @@
                 // It's in the window, check in 5 minutes
                 nextCheckTime = new Date(now.getTime() + 5 * 60 * 1000);
 
-                // If the next check is past 5:30 AM, then schedule for tomorrow at 5:00 AM
+                // If the next check is past 5:20 AM, then schedule for tomorrow at 5:00 AM
                 if (nextCheckTime > endCheck) {
                     nextCheckTime = new Date(startCheck);
                     nextCheckTime.setDate(nextCheckTime.getDate() + 1);
                 }
             } else {
-                // It's after 5:30 AM, schedule for tomorrow at 5:00 AM
+                // It's after 5:20 AM, schedule for tomorrow at 5:00 AM
                 nextCheckTime = new Date(startCheck);
                 nextCheckTime.setDate(nextCheckTime.getDate() + 1);
             }
@@ -568,7 +597,7 @@
         async function performArrivalCheck(force = false) {
             if (!alert5amEnabled && !force) return;
             const today = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-            console.log(`Performing automated 5 AM arrival check for [${today}] for SetNo: ${monitoredSetNo}...`);
+            console.log(`Performing automated 5 AM arrival check for [${today}] for SetNo: ${monitoredSetNo}, Window: ${timeFrom} - ${timeTo}...`);
             try {
                 const response = await fetch('https://api.tfl.gov.uk/trackernet/PredictionDetailed/H/STG?app_key=f6de10a6e45f4c55b9e4de791bbc60c0');
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -591,7 +620,7 @@
                         const attr = t['@attributes'];
                         if (attr && attr.SetNo === monitoredSetNo) {
                             const arrivalTime = attr.ArrivalTime; // Format HH:MM:SS
-                            if (force || (arrivalTime >= "05:15:00" && arrivalTime <= "05:40:00")) {
+                            if (force || (arrivalTime >= timeFrom && arrivalTime <= timeTo)) {
                                 found = true;
                                 showLocalNotification(`[${today}] Tàu ${monitoredSetNo} đến lúc ${arrivalTime}`, `Platform: ${p['@attributes'].N}`);
                             }
@@ -600,7 +629,7 @@
                 });
 
                 if (!found) {
-                    console.log(`SetNo ${monitoredSetNo} not found in the specified time window on ${today}.`);
+                    console.log(`SetNo ${monitoredSetNo} not found in the window [${timeFrom} - ${timeTo}] on ${today}.`);
                     showLocalNotification(force ? `Test [${today}]` : `Cảnh báo [${today}]`, `Hôm nay không có tàu ${monitoredSetNo} đến Stepney Green!`);
                 }
             } catch (error) {
