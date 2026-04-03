@@ -88,33 +88,47 @@ self.addEventListener('message', event => {
 // Notification handling
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  const data = event.notification.data || {};
+  let targetUrl = '/';
+  if (data.station && data.line && data.appKey) {
+    targetUrl = `/?station=${encodeURIComponent(data.station)}&line=${encodeURIComponent(data.line)}&appKey=${encodeURIComponent(data.appKey)}&setNo=${encodeURIComponent(data.setNo || '')}`;
+  }
+
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) return client.focus();
+        if ('focus' in client) {
+          return client.navigate(targetUrl).then(c => c.focus());
+        }
       }
-      if (clients.openWindow) return clients.openWindow('/');
+      if (clients.openWindow) return clients.openWindow(targetUrl);
     })
   );
 });
 
 // Push notification listener
 self.addEventListener('push', (event) => {
-    let data = { title: 'TubeLive', body: 'New notification available' };
-    if (event.data) {
-        try {
-            data = event.data.json();
-        } catch (e) {
-            data = { title: 'TubeLive', body: event.data.text() };
-        }
+  let data = { title: 'TubeLive', body: 'New notification available' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'TubeLive', body: event.data.text() };
     }
-    
-    const options = {
-        body: data.body,
-        icon: '/512-512.png',
-        badge: '/192-192.png',
-        data: { url: '/' }
-    };
+  }
 
-    event.waitUntil(self.registration.showNotification(data.title, options));
+  const options = {
+    body: data.body,
+    icon: '/512-512.png',
+    badge: '/192-192.png',
+    data: {
+      url: '/',
+      station: data.station,
+      line: data.line,
+      appKey: data.appKey,
+      setNo: data.setNo
+    }
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });

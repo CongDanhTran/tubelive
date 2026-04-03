@@ -207,14 +207,60 @@
             return obj;
         }
 
+        // Converts TfL UTC HH:mm:ss to local time HH:mm:ss
+        function tflTimeToLocal(utcString) {
+            if (!utcString || !utcString.includes(':')) return utcString;
+            const [h, m, s] = utcString.split(':').map(Number);
+            const date = new Date();
+            date.setUTCHours(h, m, s, 0);
+            const pad = n => n.toString().padStart(2, '0');
+            return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        }
+
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').textContent = now.toLocaleTimeString();
         }
         setInterval(updateClock, 1000);
 
+        const params = new URLSearchParams(window.location.search);
+        let monitoredStation = params.get('station') || localStorage.getItem('monitoredStation') || '';
+        let monitoredLine = params.get('line') || localStorage.getItem('monitoredLine') || '';
+        let monitoredAppKey = params.get('appKey') || localStorage.getItem('monitoredAppKey') || '';
+
+        const lineNames = {
+            'B': 'Bakerloo',
+            'C': 'Central',
+            'D': 'District',
+            'H': 'Hammersmith & Circle',
+            'J': 'Jubilee',
+            'M': 'Metropolitan',
+            'N': 'Northern',
+            'P': 'Piccadilly',
+            'V': 'Victoria',
+            'W': 'Waterloo & City'
+        };
+
+        let URL;
+        function updateUrl() {
+            URL = `https://api.tfl.gov.uk/trackernet/PredictionDetailed/${monitoredLine}/${monitoredStation}?app_key=${monitoredAppKey}`;
+        }
+        updateUrl();
+
+        function validateInputs() {
+            if (!monitoredStation || !monitoredLine || !monitoredAppKey) {
+                const arrivalsContainer = document.getElementById('arrivals');
+                if (arrivalsContainer) {
+                    arrivalsContainer.innerHTML = '<h2 style="color: red;">Missing Station, Line, or App Key in Settings!</h2>';
+                }
+                return false;
+            }
+            return true;
+        }
+
         function fetchArrivals() {
-            fetch('https://api.tfl.gov.uk/trackernet/PredictionDetailed/H/STG?app_key=f6de10a6e45f4c55b9e4de791bbc60c0')
+            if (!validateInputs()) return;
+            fetch(URL)
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                     return response.text();
@@ -269,13 +315,8 @@
                     const timeToStation = Math.floor(item.SecondsTo / 60) || 0;
                     const isEmpty = (str) => (!str?.length);
                     var expectedArrival = "Unknown";
-
                     if (!isEmpty(item.ArrivalTime)) {
-                        let [h, m, s] = item.ArrivalTime.split(":").map(Number);
-                        let date = new Date(0, 0, 0, h, m, s);
-                        date.setHours(date.getHours() + 1);
-                        const pad = n => n.toString().padStart(2, "0");
-                        expectedArrival = `${date.getHours()}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                        expectedArrival = tflTimeToLocal(item.ArrivalTime);
                     }
 
                     arrivalDiv.innerHTML = `
@@ -363,6 +404,17 @@
             <label for="setNoInput">Monitor Tube No:</label>
             <input type="text" id="setNoInput" value="205"
                 style="min-width: 20px; background: #222; color: #ff9729; border: 1px solid #444; padding: 5px; border-radius: 5px; box-sizing: border-box; margin-top: 4px;">
+            <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
+                <label style="font-size: 0.8em;">Stat:</label>
+                <input type="text" id="stationInput" value="WCL"
+                    style="width: 40px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                <label style="font-size: 0.8em;">Line:</label>
+                <input type="text" id="lineInput" value="D"
+                    style="width: 20px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                <label style="font-size: 0.8em;">Key:</label>
+                <input type="text" id="appKeyInput" value=""
+                    style="width: 60px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+            </div>
             <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
                 <label style="font-size: 0.8em;">From:</label>
                 <input type="time" id="timeFromInput" step="1"
@@ -521,7 +573,7 @@
         const PUSH_SERVER_URL = ''; // Leave empty if same origin, or e.g., 'https://your-server.com'
 
         async function subscribeToPush() {
-            if (!('serviceWorker' in navigator) || !PUSH_SERVER_URL) return;
+            if (!('serviceWorker' in navigator)) return;
             const registration = await navigator.serviceWorker.ready;
 
             try {
@@ -540,7 +592,10 @@
                         subscription,
                         monitoredSetNo,
                         timeFrom,
-                        timeTo
+                        timeTo,
+                        station: monitoredStation,
+                        line: monitoredLine,
+                        appKey: monitoredAppKey
                     })
                 });
                 console.log("Server-side subscription successful.");
@@ -550,7 +605,7 @@
         }
 
         async function unsubscribeFromPush() {
-            if (!('serviceWorker' in navigator) || !PUSH_SERVER_URL) return;
+            if (!('serviceWorker' in navigator)) return;
             const registration = await navigator.serviceWorker.ready;
             const subscription = await registration.pushManager.getSubscription();
 
@@ -579,7 +634,7 @@
         // --- 5 AM Automated Arrival Check ---
         let alert5amEnabled = localStorage.getItem('alert5amEnabled') === 'true';
         let serverAlertEnabled = localStorage.getItem('serverAlertEnabled') === 'true';
-        let monitoredSetNo = localStorage.getItem('monitoredSetNo') || '205';
+        let monitoredSetNo = params.get('setNo') || localStorage.getItem('monitoredSetNo') || '205';
         let timeFrom = localStorage.getItem('timeFrom') || '05:15:00';
         let timeTo = localStorage.getItem('timeTo') || '05:40:00';
         let checkInterval = parseInt(localStorage.getItem('checkInterval')) || 5;
@@ -587,6 +642,9 @@
         const alert5amBtn = document.getElementById('alert5amBtn');
         const serverAlertBtn = document.getElementById('serverAlertBtn');
         const setNoInput = document.getElementById('setNoInput');
+        const stationInput = document.getElementById('stationInput');
+        const lineInput = document.getElementById('lineInput');
+        const appKeyInput = document.getElementById('appKeyInput');
         const timeFromInput = document.getElementById('timeFromInput');
         const timeToInput = document.getElementById('timeToInput');
         const checkIntervalInput = document.getElementById('checkIntervalInput');
@@ -596,6 +654,37 @@
             monitoredSetNo = e.target.value.trim();
             localStorage.setItem('monitoredSetNo', monitoredSetNo);
             if (serverAlertEnabled) await subscribeToPush();
+        });
+
+        stationInput.value = monitoredStation;
+        stationInput.addEventListener('change', async (e) => {
+            monitoredStation = e.target.value.trim().toUpperCase();
+            localStorage.setItem('monitoredStation', monitoredStation);
+            updateUrl();
+            fetchArrivals();
+            if (serverAlertEnabled) await subscribeToPush();
+        });
+
+        lineInput.value = monitoredLine;
+        lineInput.addEventListener('change', async (e) => {
+            monitoredLine = e.target.value.trim().toUpperCase();
+            localStorage.setItem('monitoredLine', monitoredLine);
+            updateUrl();
+            fetchArrivals();
+            if (serverAlertEnabled) await subscribeToPush();
+        });
+
+        appKeyInput.value = monitoredAppKey.slice(0, 10) + "..."; // Masking for display
+        appKeyInput.addEventListener('click', () => {
+            const newKey = prompt("Enter your TfL App Key:", monitoredAppKey);
+            if (newKey && newKey.trim()) {
+                monitoredAppKey = newKey.trim();
+                localStorage.setItem('monitoredAppKey', monitoredAppKey);
+                appKeyInput.value = monitoredAppKey.slice(0, 10) + "...";
+                updateUrl();
+                fetchArrivals();
+                if (serverAlertEnabled) subscribeToPush();
+            }
         });
 
         timeFromInput.value = timeFrom;
@@ -734,10 +823,11 @@
 
         async function performArrivalCheck(force = false) {
             if (!alert5amEnabled && !force) return;
+            if (!validateInputs()) return;
             const today = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
             console.log(`Performing automated 5 AM arrival check for [${today}] for SetNo: ${monitoredSetNo}, Window: ${timeFrom} - ${timeTo}...`);
             try {
-                const response = await fetch('https://api.tfl.gov.uk/trackernet/PredictionDetailed/H/STG?app_key=f6de10a6e45f4c55b9e4de791bbc60c0');
+                const response = await fetch(URL);
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
                 const xmlString = await response.text();
@@ -750,6 +840,8 @@
                 let found = false;
                 const platforms = Array.isArray(data.ROOT.S.P) ? data.ROOT.S.P : [data.ROOT.S.P];
 
+                const stationName = data.ROOT.S['@attributes'].N;
+
                 platforms.forEach(p => {
                     if (!p.T) return;
                     const trains = Array.isArray(p.T) ? p.T : [p.T];
@@ -757,10 +849,11 @@
                     trains.forEach(t => {
                         const attr = t['@attributes'];
                         if (attr && attr.SetNo === monitoredSetNo) {
-                            const arrivalTime = attr.ArrivalTime; // Format HH:MM:SS
-                            if (force || (arrivalTime >= timeFrom && arrivalTime <= timeTo)) {
+                            const localArrivalTime = tflTimeToLocal(attr.ArrivalTime);
+                            if (force || (localArrivalTime >= timeFrom && localArrivalTime <= timeTo)) {
                                 found = true;
-                                showLocalNotification(`[${today}] Tàu ${monitoredSetNo} đến lúc ${arrivalTime}`, `Platform: ${p['@attributes'].N}`);
+                                const lineName = lineNames[monitoredLine] || monitoredLine;
+                                showLocalNotification(`[${today}] ${stationName} - ${lineName} ${monitoredSetNo} to ${attr.Destination} - ${localArrivalTime}`);
                             }
                         }
                     });
