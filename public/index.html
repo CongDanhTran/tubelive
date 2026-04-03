@@ -235,13 +235,15 @@
             arrivalsContainer.innerHTML = '';
             const platforms = {};
 
-            if (!data.ROOT || !data.ROOT.S || !data.ROOT.S.P) {
+            console.log(data);
+
+            if (!data.ROOT || !data.ROOT.S || !data.ROOT.S.P || data.ROOT.S.P.filter(item0 => item0.T?.length > 0).length === 0) {
                 arrivalsContainer.innerHTML = '<h2 style="color: red;">No tube</h2>';
                 return;
             }
 
             data.ROOT.S.P.forEach(item0 => {
-                if (item0.T.length > 0) {
+                if (item0.T?.length > 0) {
                     platforms[item0['@attributes'].N] = item0.T ?? [];
                 }
             });
