@@ -364,6 +364,11 @@
                 <input type="time" id="timeToInput" step="1"
                     style="background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
             </div>
+            <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
+                <label style="font-size: 0.8em;">Every (mins):</label>
+                <input type="number" id="checkIntervalInput" min="1" max="60"
+                    style="width: 50px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+            </div>
             <button class="cache-btn" id="alert5amBtn">🔔 5 AM Alert: OFF</button>
             <button class="cache-btn" id="test5amBtn">🧪 Test 5 AM Alert</button>
             <div id="cacheStatus"></div>
@@ -509,11 +514,13 @@
         let monitoredSetNo = localStorage.getItem('monitoredSetNo') || '205';
         let timeFrom = localStorage.getItem('timeFrom') || '05:15:00';
         let timeTo = localStorage.getItem('timeTo') || '05:40:00';
-
+        let checkInterval = parseInt(localStorage.getItem('checkInterval')) || 5;
+        
         const alert5amBtn = document.getElementById('alert5amBtn');
         const setNoInput = document.getElementById('setNoInput');
         const timeFromInput = document.getElementById('timeFromInput');
         const timeToInput = document.getElementById('timeToInput');
+        const checkIntervalInput = document.getElementById('checkIntervalInput');
 
         setNoInput.value = monitoredSetNo;
         setNoInput.addEventListener('change', (e) => {
@@ -533,9 +540,15 @@
             localStorage.setItem('timeTo', timeTo);
         });
 
+        checkIntervalInput.value = checkInterval;
+        checkIntervalInput.addEventListener('change', (e) => {
+            checkInterval = parseInt(e.target.value) || 5;
+            localStorage.setItem('checkInterval', checkInterval);
+        });
+
         function updateAlert5amBtn() {
             alert5amBtn.textContent = alert5amEnabled ? '🔕 5 AM Alert: ON' : '🔔 5 AM Alert: OFF';
-            alert5amBtn.style.color = alert5amEnabled ? '#0f0' : '#ff9729';
+            alert5amBtn.style.color = alert5amEnabled ? '#0f0' : '#ff9729'; 
         }
 
         alert5amBtn.addEventListener('click', async () => {
@@ -547,7 +560,7 @@
             localStorage.setItem('alert5amEnabled', alert5amEnabled);
             updateAlert5amBtn();
         });
-
+        
         updateAlert5amBtn();
 
         document.getElementById('test5amBtn').addEventListener('click', () => {
@@ -568,22 +581,22 @@
                 // It's before 5:00 AM, wait until exactly 5:00 AM
                 nextCheckTime = startCheck;
             } else if (now >= startCheck && now <= endCheck) {
-                // It's in the window, check in 5 minutes
-                nextCheckTime = new Date(now.getTime() + 5 * 60 * 1000);
-
-                // If the next check is past 5:20 AM, then schedule for tomorrow at 5:00 AM
+                // It's in the window, check in custom minutes
+                nextCheckTime = new Date(now.getTime() + checkInterval * 60 * 1000);
+                
+                // If the next check is past the window end, schedule for tomorrow at 5:00 AM
                 if (nextCheckTime > endCheck) {
                     nextCheckTime = new Date(startCheck);
                     nextCheckTime.setDate(nextCheckTime.getDate() + 1);
                 }
             } else {
-                // It's after 5:20 AM, schedule for tomorrow at 5:00 AM
+                // It's after the window end, schedule for tomorrow at 5:00 AM
                 nextCheckTime = new Date(startCheck);
                 nextCheckTime.setDate(nextCheckTime.getDate() + 1);
             }
 
             const delay = nextCheckTime.getTime() - now.getTime();
-            console.log(`Next arrival check at ${nextCheckTime.toLocaleTimeString()} (delay: ${Math.floor(delay / 60000)} mins).`);
+            console.log(`Next arrival check at ${nextCheckTime.toLocaleTimeString()} (delay: ${Math.floor(delay / 60000)} mins using interval ${checkInterval}m).`);
 
             setTimeout(() => {
                 const inWindow = nextCheckTime >= startCheck && nextCheckTime <= endCheck;
