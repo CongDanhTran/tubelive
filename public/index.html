@@ -369,8 +369,9 @@
                 <input type="number" id="checkIntervalInput" min="1" max="60"
                     style="width: 50px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
             </div>
-            <button class="cache-btn" id="alert5amBtn">🔔 5 AM Alert: OFF</button>
-            <button class="cache-btn" id="test5amBtn">🧪 Test 5 AM Alert</button>
+            <button class="cache-btn" id="alert5amBtn">🔔 Local Alert: OFF</button>
+            <button class="cache-btn" id="serverAlertBtn">📡 Server Alert: OFF</button>
+            <button class="cache-btn" id="test5amBtn">🧪 Test Local Alert</button>
             <div id="cacheStatus"></div>
         </div>
     </div>
@@ -570,12 +571,14 @@
 
         // --- 5 AM Automated Arrival Check ---
         let alert5amEnabled = localStorage.getItem('alert5amEnabled') === 'true';
+        let serverAlertEnabled = localStorage.getItem('serverAlertEnabled') === 'true';
         let monitoredSetNo = localStorage.getItem('monitoredSetNo') || '205';
         let timeFrom = localStorage.getItem('timeFrom') || '05:15:00';
         let timeTo = localStorage.getItem('timeTo') || '05:40:00';
         let checkInterval = parseInt(localStorage.getItem('checkInterval')) || 5;
 
         const alert5amBtn = document.getElementById('alert5amBtn');
+        const serverAlertBtn = document.getElementById('serverAlertBtn');
         const setNoInput = document.getElementById('setNoInput');
         const timeFromInput = document.getElementById('timeFromInput');
         const timeToInput = document.getElementById('timeToInput');
@@ -585,21 +588,21 @@
         setNoInput.addEventListener('change', async (e) => {
             monitoredSetNo = e.target.value.trim();
             localStorage.setItem('monitoredSetNo', monitoredSetNo);
-            if (alert5amEnabled) await subscribeToPush(); 
+            if (serverAlertEnabled) await subscribeToPush(); 
         });
 
         timeFromInput.value = timeFrom;
         timeFromInput.addEventListener('change', async (e) => {
             timeFrom = e.target.value;
             localStorage.setItem('timeFrom', timeFrom);
-            if (alert5amEnabled) await subscribeToPush();
+            if (serverAlertEnabled) await subscribeToPush();
         });
 
         timeToInput.value = timeTo;
         timeToInput.addEventListener('change', async (e) => {
             timeTo = e.target.value;
             localStorage.setItem('timeTo', timeTo);
-            if (alert5amEnabled) await subscribeToPush();
+            if (serverAlertEnabled) await subscribeToPush();
         });
 
         checkIntervalInput.value = checkInterval;
@@ -608,9 +611,12 @@
             localStorage.setItem('checkInterval', checkInterval);
         });
 
-        function updateAlert5amBtn() {
-            alert5amBtn.textContent = alert5amEnabled ? '🔕 Alert: ON' : '🔔 Alert: OFF';
+        function updateAlertButtons() {
+            alert5amBtn.textContent = alert5amEnabled ? '🔕 Local Alert: ON' : '🔔 Local Alert: OFF';
             alert5amBtn.style.color = alert5amEnabled ? '#0f0' : '#ff9729';
+
+            serverAlertBtn.textContent = serverAlertEnabled ? '🔕 Server Alert: ON' : '📡 Server Alert: OFF';
+            serverAlertBtn.style.color = serverAlertEnabled ? '#0f0' : '#ff9729';
         }
 
         alert5amBtn.addEventListener('click', async () => {
@@ -620,16 +626,26 @@
             }
             alert5amEnabled = !alert5amEnabled;
             localStorage.setItem('alert5amEnabled', alert5amEnabled);
-            updateAlert5amBtn();
+            updateAlertButtons();
+        });
 
-            if (alert5amEnabled) {
+        serverAlertBtn.addEventListener('click', async () => {
+            if (Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return;
+            }
+            serverAlertEnabled = !serverAlertEnabled;
+            localStorage.setItem('serverAlertEnabled', serverAlertEnabled);
+            updateAlertButtons();
+
+            if (serverAlertEnabled) {
                 await subscribeToPush();
             } else {
                 await unsubscribeFromPush();
             }
         });
 
-        updateAlert5amBtn();
+        updateAlertButtons();
 
         document.getElementById('test5amBtn').addEventListener('click', () => {
             performArrivalCheck(true); // Force check now
