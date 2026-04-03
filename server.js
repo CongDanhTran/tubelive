@@ -153,8 +153,9 @@ app.post('/unsubscribe', (req, res) => {
 });
 
 // 4. TfL Monitoring Logic (Cron Job)
-// Runs every 5 minutes from 5:00 AM to 5:40 AM daily
-cron.schedule('*/5 5 * * *', async () => {
+// Use schedule from env or default to every 5 mins from 5:00 AM to 5:40 AM
+const cronSchedule = process.env.CRON_SCHEDULE || '*/30 * * * *';
+cron.schedule(cronSchedule, async () => {
     console.log(`[${new Date().toLocaleTimeString()}] Running scheduled TfL Arrival Check...`);
     await performGlobalCheck();
 });
