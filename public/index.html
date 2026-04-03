@@ -235,6 +235,11 @@
             arrivalsContainer.innerHTML = '';
             const platforms = {};
 
+            if (!data.ROOT || !data.ROOT.S || !data.ROOT.S.P) {
+                arrivalsContainer.innerHTML = '<h2 style="color: red;">No tube</h2>';
+                return;
+            }
+
             data.ROOT.S.P.forEach(item0 => {
                 if (item0.T.length > 0) {
                     platforms[item0['@attributes'].N] = item0.T ?? [];
@@ -516,11 +521,11 @@
         async function subscribeToPush() {
             if (!('serviceWorker' in navigator) || !PUSH_SERVER_URL) return;
             const registration = await navigator.serviceWorker.ready;
-            
+
             try {
                 const response = await fetch(`${PUSH_SERVER_URL}/vapid-public-key`);
                 const { publicKey } = await response.json();
-                
+
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: urlBase64ToUint8Array(publicKey)
@@ -546,7 +551,7 @@
             if (!('serviceWorker' in navigator) || !PUSH_SERVER_URL) return;
             const registration = await navigator.serviceWorker.ready;
             const subscription = await registration.pushManager.getSubscription();
-            
+
             if (subscription) {
                 await subscription.unsubscribe();
                 await fetch(`${PUSH_SERVER_URL}/unsubscribe`, {
@@ -588,7 +593,7 @@
         setNoInput.addEventListener('change', async (e) => {
             monitoredSetNo = e.target.value.trim();
             localStorage.setItem('monitoredSetNo', monitoredSetNo);
-            if (serverAlertEnabled) await subscribeToPush(); 
+            if (serverAlertEnabled) await subscribeToPush();
         });
 
         timeFromInput.value = timeFrom;
