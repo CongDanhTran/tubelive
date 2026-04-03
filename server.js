@@ -235,12 +235,18 @@ async function performGlobalCheck() {
                 }
 
                 if (!found) {
-                    console.log(`Train ${monitoredSetNo} not found in JSON for ${key}`);
-                    const lineName = lineNames[sub.line] || sub.line;
-                    sendPush(subscription, {
-                        title: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
-                        body: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
-                    });
+                    const now = new Date();
+                    const pad = n => n.toString().padStart(2, '0');
+                    const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+                    if (currentTime >= timeFrom && currentTime <= timeTo) {
+                        console.log(`Train ${monitoredSetNo} not found in JSON for ${key} within time window.`);
+                        const lineName = lineNames[sub.line] || sub.line;
+                        sendPush(subscription, {
+                            title: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
+                            body: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
+                        });
+                    }
                 }
             }
         } catch (err) {
