@@ -61,10 +61,10 @@ const lineNames = {
 };
 
 // Converts TfL UTC HH:mm:ss to local time HH:mm:ss
-function tflTimeToLocal(utcString) {
+function tflTimeToLocal(utcString, refDate = new Date()) {
     if (!utcString || !utcString.includes(':')) return utcString;
     const [h, m, s] = utcString.split(':').map(Number);
-    const date = new Date();
+    const date = new Date(refDate);
     date.setUTCHours(h, m, s, 0);
     const pad = n => n.toString().padStart(2, '0');
     return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
@@ -180,7 +180,7 @@ async function performGlobalCheck() {
         return acc;
     }, {});
 
-    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+
 
     for (const [key, subs] of Object.entries(groups)) {
         try {
@@ -195,6 +195,11 @@ async function performGlobalCheck() {
             const xmlDoc = parser.parseFromString(xmlString, "application/xml");
             const data = xmlToJson(xmlDoc);
 
+
+            const whenCreatedRaw = data.ROOT?.WhenCreated || "";
+            const whenCreatedTime = whenCreatedRaw.split(' ').pop() || "";
+            const apiDate = new Date(whenCreatedRaw || Date.now());
+            const today = apiDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
 
             for (const sub of subs) {
                 const { subscription, monitoredSetNo, timeFrom, timeTo } = sub;
@@ -217,7 +222,7 @@ async function performGlobalCheck() {
                             if (attrs && attrs.SetNo === paddedSetNo) {
                                 const utcTime = attrs.ArrivalTime || attrs.DepartTime;
                                 if (utcTime) {
-                                    const localArrivalTime = tflTimeToLocal(utcTime);
+                                    const localArrivalTime = tflTimeToLocal(utcTime, apiDate);
                                     if (localArrivalTime >= timeFrom && localArrivalTime <= timeTo) {
                                         found = true;
                                         const lineName = lineNames[sub.line] || sub.line;
@@ -232,20 +237,16 @@ async function performGlobalCheck() {
                         }
                         if (found) break;
                     }
-                }
 
-                if (!found) {
-                    const now = new Date();
-                    const pad = n => n.toString().padStart(2, '0');
-                    const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
-                    if (currentTime >= timeFrom && currentTime <= timeTo) {
-                        console.log(`Train ${monitoredSetNo} not found in JSON for ${key} within time window.`);
-                        const lineName = lineNames[sub.line] || sub.line;
-                        sendPush(subscription, {
-                            title: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
-                            body: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
-                        });
+                    if (!found) {
+                        if (whenCreatedTime >= timeFrom && whenCreatedTime <= timeTo) {
+                            console.log(`Train ${monitoredSetNo} not found in JSON for ${key} within time window (API Time: ${whenCreatedTime}, Date: ${today}).`);
+                            const lineName = lineNames[sub.line] || sub.line;
+                            sendPush(subscription, {
+                                title: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
+                                body: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
+                            });
+                        }
                     }
                 }
             }
