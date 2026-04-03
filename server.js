@@ -119,6 +119,10 @@ app.get('/vapid-public-key', (req, res) => {
     res.json({ publicKey: vapidKeys.publicKey });
 });
 
+app.get('/subscriptions', (req, res) => {
+    res.json(subscriptions);
+});
+
 app.post('/subscribe', (req, res) => {
     const { subscription, monitoredSetNo, timeFrom, timeTo, station, line, appKey } = req.body;
 
