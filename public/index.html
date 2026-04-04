@@ -1432,7 +1432,7 @@
 
                 if (!found) {
                     console.log(`SetNo ${monitoredSetNo} not found in the window [${timeFrom} - ${timeTo}] on ${today}.`);
-                    showLocalNotification(force ? `Test [${today}]` : `Cảnh báo [${today}]`, `Hôm nay không có tàu ${monitoredSetNo} đến Stepney Green!`);
+                    showLocalNotification(force ? `Test [${today}]` : `Alert [${today}]`, `No train line ${lineNames[monitoredLine]} ${monitoredSetNo} to ${stationName}!`);
                 }
             } catch (error) {
                 console.error('Error during scheduled check:', error);
