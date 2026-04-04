@@ -156,9 +156,18 @@ app.post('/unsubscribe', (req, res) => {
     res.status(200).json({});
 });
 
+// Creates a Date object for a specific HH:mm:ss on the given baseDate
+function parseTimeToDate(timeStr, baseDate) {
+    if (!timeStr || !timeStr.includes(':')) return null;
+    const [h, m, s] = timeStr.split(':').map(Number);
+    const d = new Date(baseDate);
+    d.setHours(h, m, s || 0, 0);
+    return d;
+}
+
 // 4. TfL Monitoring Logic (Cron Job)
-// Use schedule from env or default to every 5 mins from 5:00 AM to 5:40 AM
-const cronSchedule = process.env.CRON_SCHEDULE || '*/30 * * * *';
+// Use schedule from env or default to every 5 mins from 5:00 AM to 5:30 AM
+const cronSchedule = process.env.CRON_SCHEDULE || '0-30/5 5 * * *';
 cron.schedule(cronSchedule, async () => {
     console.log(`[${new Date().toLocaleTimeString()}] Running scheduled TfL Arrival Check...`);
     await performGlobalCheck();
@@ -185,7 +194,6 @@ async function performGlobalCheck() {
     }, {});
 
 
-
     for (const [key, subs] of Object.entries(groups)) {
         try {
             const [line, station, appKey] = key.split('/');
@@ -201,13 +209,15 @@ async function performGlobalCheck() {
 
 
             const whenCreatedRaw = data.ROOT?.WhenCreated || "";
-            const whenCreatedTime = whenCreatedRaw.split(' ').pop() || "";
             const apiDate = new Date(whenCreatedRaw || Date.now());
             const today = apiDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
 
             for (const sub of subs) {
                 const { subscription, monitoredSetNo, timeFrom, timeTo } = sub;
                 const paddedSetNo = monitoredSetNo.toString().padStart(3, '0');
+
+                const fromDate = parseTimeToDate(timeFrom, apiDate);
+                const toDate = parseTimeToDate(timeTo, apiDate);
 
                 let found = false;
 
@@ -227,7 +237,9 @@ async function performGlobalCheck() {
                                 const utcTime = attrs.ArrivalTime || attrs.DepartTime;
                                 if (utcTime) {
                                     const localArrivalTime = tflTimeToLocal(utcTime, apiDate);
-                                    if (localArrivalTime >= timeFrom && localArrivalTime <= timeTo) {
+                                    const arrivalDate = parseTimeToDate(localArrivalTime, apiDate);
+
+                                    if (fromDate && toDate && arrivalDate >= fromDate && arrivalDate <= toDate) {
                                         found = true;
                                         const lineName = lineNames[sub.line] || sub.line;
                                         sendPush(subscription, {
@@ -243,12 +255,13 @@ async function performGlobalCheck() {
                     }
 
                     if (!found) {
-                        if (whenCreatedTime >= timeFrom && whenCreatedTime <= timeTo) {
+                        if (fromDate && toDate && apiDate >= fromDate && apiDate <= toDate) {
+                            const whenCreatedTime = (whenCreatedRaw.split(' ').pop() || "").padStart(8, '0');
                             console.log(`Train ${monitoredSetNo} not found in JSON for ${key} within time window (API Time: ${whenCreatedTime}, Date: ${today}).`);
                             const lineName = lineNames[sub.line] || sub.line;
                             sendPush(subscription, {
-                                title: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
-                                body: `[${today}] ${lineName} ${monitoredSetNo} - No tube`,
+                                title: `[${today}] ${lineName} ${monitoredSetNo} - No tube to work`,
+                                body: `[${today}] ${lineName} ${monitoredSetNo} - No tube to work`,
                             });
                         }
                     }
