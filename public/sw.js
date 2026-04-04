@@ -1,7 +1,7 @@
 // Version of this service worker - increment when deploying updates
 const VERSION = 'v5';
-const CACHE_NAME = `stepney-green-${VERSION}`;
-const CACHED_URLS = ['/', '/nearby', '/manifest.json', '/192-192.png', '/512-512.png'];
+const CACHE_NAME = `tubelive-${VERSION}`;
+const CACHED_URLS = ['/', '/nearby', '/manifest.json', '/images/192-192.png', '/images/512-512.png'];
 
 // Install: cache the HTML shell
 self.addEventListener('install', event => {
@@ -19,7 +19,7 @@ self.addEventListener('activate', event => {
       const cacheNames = await caches.keys();
       await Promise.all(
         cacheNames
-          .filter(name => name !== CACHE_NAME && name.startsWith('stepney-green-'))
+          .filter(name => name !== CACHE_NAME && name.startsWith('tubelive-'))
           .map(name => caches.delete(name))
       );
 
@@ -120,8 +120,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body,
-    icon: '/512-512.png',
-    badge: '/192-192.png',
+    icon: ' /images/512-512.png',
+    badge: '/images/192-192.png',
     data: {
       url: '/',
       station: data.station,

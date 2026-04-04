@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Tube</title>
     <link rel="manifest" href="/manifest.json?name=Tube+Live&short_name=TubeLive&start_url=/">
+    <link rel="icon" href="images/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     <style>
         body {
             font-family: 'Courier New', Courier, monospace;
@@ -513,8 +515,8 @@
                     const cache = await caches.open('tubelive');
                     await cache.add('/index');
                     await cache.add('/manifest.json');
-                    await cache.add('/192-192.png');
-                    await cache.add('/512-512.png');
+                    await cache.add('/images/192-192.png');
+                    await cache.add('/images/512-512.png');
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Page cached!';
                     window.location.reload();
@@ -1448,8 +1450,8 @@
             const registration = await navigator.serviceWorker.ready;
             registration.showNotification(title, {
                 body: body,
-                icon: '/192-192.png',
-                badge: '/192-192.png',
+                icon: '/images/192-192.png',
+                badge: '/images/192-192.png',
                 vibrate: [200, 100, 200],
                 tag: 'arrival-alert'
             });

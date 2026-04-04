@@ -177,11 +177,11 @@
             } catch (e) {
                 // Fallback if SW not yet controlling the page
                 try {
-                    const cache = await caches.open('stepney-green-v4');
+                    const cache = await caches.open('tubelive-v4');
                     await cache.add('/nearby');
                     await cache.add('/manifest.json?name=Nearby+Tubes&short_name=Nearby&start_url=/nearby.html');
-                    await cache.add('/192-192.png');
-                    await cache.add('/512-512.png');
+                    await cache.add('/images/192-192.png');
+                    await cache.add('/images/512-512.png');
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Page cached!';
                     window.location.reload();
@@ -202,7 +202,7 @@
                 cacheStatus.textContent = '✓ Cache cleared!';
             } catch (e) {
                 try {
-                    await caches.delete('stepney-green-v1');
+                    await caches.delete('tubelive-v1');
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Cache cleared!';
                 } catch (err) {
