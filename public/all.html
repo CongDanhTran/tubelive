@@ -226,6 +226,9 @@
 
                     const array = ['BKG', 'STG', 'ALD']
 
+                    const arrivalsContainer = document.getElementById('arrivals');
+                    arrivalsContainer.innerHTML = '';
+
                     try {
 
                         json.ROOT.S.forEach(item => {
