@@ -446,7 +446,7 @@
             <button class="cache-btn" id="alert5amBtn">🔕 Local Alert: OFF</button>
             <button class="cache-btn" id="serverAlertBtn">🔕 Server Alert: OFF</button>
             <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
-            <button class="cache-btn" id="summaryToggleBtn">🔕 Summary: OFF</button>
+            <button class="cache-btn" id="summaryToggleBtn">Multi-Station: OFF</button>
             <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
                 <label style="font-size: 0.8em;">Line:</label>
                 <select id="summaryLineInput"
@@ -1250,7 +1250,7 @@
         const summaryArrivalsContainer = document.getElementById('summaryArrivals');
 
         function updateSummaryButtons() {
-            summaryToggleBtn.textContent = summaryEnabled ? '🔔 Summary: ON' : '🔕 Summary: OFF';
+            summaryToggleBtn.textContent = summaryEnabled ? 'Multi-Station: ON' : 'Multi-Station: OFF';
             summaryToggleBtn.style.color = summaryEnabled ? '#0f0' : '#ff9729';
             summaryArrivalsContainer.style.display = summaryEnabled ? 'grid' : 'none';
         }
