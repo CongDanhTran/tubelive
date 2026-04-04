@@ -139,6 +139,16 @@
     </div>
     <span class="station-name">Barking Stepney Aldgate Live</span>
     <div id="arrivals"></div>
+    <h3>Marriot Tube + Bus Live</h3>
+    <div class="journeyContainer" id="journeyContainer1"></div>
+
+    <h3>Marriot 5am Tube only</h3>
+    <div class="journeyContainer" id="journeyContainer"></div>
+
+    <h3>Marriot 5am Bus only</h3>
+    <div class="journeyContainer" id="journeyContainer2"></div>
+
+
     <script>
 
         function xmlToJson(xml) {
@@ -217,20 +227,34 @@
                     const array = ['BKG', 'STG', 'ALD']
 
                     try {
+
                         json.ROOT.S.forEach(item => {
+
                             if (array.includes(item['@attributes']?.Code)) {
+
                                 updateArrivals(item, item['@attributes']?.N);
+
                             }
+
                         });
+
+
+
                     }
                     catch (e) {
                     }
+
+
+
                 })
                 .catch(error => {
                     arrivals.innerHTML = "<h2 style='color: red;'>Error fetching tube data</h2>";
                     console.error('Error fetching data:', error)
                 });
         }
+
+
+
 
         // Function to update arrival times on the page
         function updateArrivals(data, name) {
@@ -240,10 +264,7 @@
             // Group the data by platform
             const platforms = {};
 
-            if (data.P.T == undefined || data.P.length == 0) {
-                arrivalsContainer.innerHTML = "<h2 style='color: red;'>No arrivals found</h2>";
-                return;
-            }
+            if (data.P.T == undefined || data.P.length == 0) { }
 
             data.P.forEach(item0 => {
                 if (item0.T != undefined && item0.T.length > 0)
