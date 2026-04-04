@@ -404,27 +404,29 @@
         <button id="cogBtn"
             style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
         <div id="sliderContainer"
-            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:0.4em; min-width: 200px;">
+            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:1em; box-sizing: border-box;">
             <label for="fontSlider">Font Size:</label>
             <input type="range" id="fontSlider" min="0.8" max="6" step="0.1">
             <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
             <button class="cache-btn" id="recacheBtn">🔄 Re-cache page</button>
             <button class="cache-btn" id="clearCacheBtn">🗑️ Clear cache</button>
             <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <label style="font-size: 0.8em;">API Key:</label>
+            <input type="text" id="appKeyInput" value=""
+                style="width: 100%; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
             <label for="setNoInput">Monitor Tube No:</label>
             <input type="text" id="setNoInput" value="205"
                 style="min-width: 20px; background: #222; color: #ff9729; border: 1px solid #444; padding: 5px; border-radius: 5px; box-sizing: border-box; margin-top: 4px;">
             <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
                 <label style="font-size: 0.8em;">Station:</label>
-                <input type="text" id="stationInput" value="WCL"
-                    style="width: 40px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                <select id="stationInput"
+                    style="width:100px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                </select>
                 <label style="font-size: 0.8em;">Line:</label>
                 <select id="lineInput"
-                    style="width: 100px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                    style="width:100px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
                 </select>
-                <label style="font-size: 0.8em;">Key:</label>
-                <input type="text" id="appKeyInput" value=""
-                    style="width: 60px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
             </div>
             <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
                 <label style="font-size: 0.8em;">From:</label>
@@ -692,6 +694,410 @@
             monitoredSetNo = e.target.value.trim();
             localStorage.setItem('monitoredSetNo', monitoredSetNo);
             if (serverAlertEnabled) await subscribeToPush();
+        });
+
+        const stations = {
+            Bakerloo: [
+                { code: "BST", name: "Baker Street" },
+                { code: "CHX", name: "Charing Cross" },
+                { code: "ERB", name: "Edgware Road (Bakerloo)" },
+                { code: "ELE", name: "Elephant and Castle" },
+                { code: "EMB", name: "Embankment" },
+                { code: "HSD", name: "Harlesden" },
+                { code: "HAW", name: "Harrow and Wealdstone" },
+                { code: "KGN", name: "Kensal Green" },
+                { code: "KNT", name: "Kenton" },
+                { code: "KPK", name: "Kilburn Park" },
+                { code: "LAM", name: "Lambeth North" },
+                { code: "MDV", name: "Maida Vale" },
+                { code: "MYB", name: "Marylebone" },
+                { code: "NWM", name: "North Wembley" },
+                { code: "OXC", name: "Oxford Circus" },
+                { code: "PAD", name: "Paddington" },
+                { code: "PIC", name: "Piccadilly Circus" },
+                { code: "QPK", name: "Queen's Park" },
+                { code: "RPK", name: "Regent's Park" },
+                { code: "SKT", name: "South Kenton" },
+                { code: "SPK", name: "Stonebridge Park" },
+                { code: "WAR", name: "Warwick Avenue" },
+                { code: "WLO", name: "Waterloo" },
+                { code: "WEM", name: "Wembley Central" },
+                { code: "WJN", name: "Willesden Junction" }
+            ],
+
+            Central: [
+                { code: "BNK", name: "Bank" },
+                { code: "BDE", name: "Barkingside" },
+                { code: "BNG", name: "Bethnal Green" },
+                { code: "BDS", name: "Bond Street" },
+                { code: "BHL", name: "Buckhurst Hill" },
+                { code: "CYL", name: "Chancery Lane" },
+                { code: "CHG", name: "Chigwell" },
+                { code: "DEB", name: "Debden" },
+                { code: "EBY", name: "Ealing Broadway" },
+                { code: "EAC", name: "East Acton" },
+                { code: "EPP", name: "Epping" },
+                { code: "FLP", name: "Fairlop" },
+                { code: "GHL", name: "Gants Hill" },
+                { code: "GRH", name: "Grange Hill" },
+                { code: "GFD", name: "Greenford" },
+                { code: "HAI", name: "Hainault" },
+                { code: "HLN", name: "Hanger Lane" },
+                { code: "HOL", name: "Holborn" },
+                { code: "HPK", name: "Holland Park" },
+                { code: "LAN", name: "Lancaster Gate" },
+                { code: "LEY", name: "Leyton" },
+                { code: "LYS", name: "Leytonstone" },
+                { code: "LST", name: "Liverpool Street" },
+                { code: "LTN", name: "Loughton" },
+                { code: "MAR", name: "Marble Arch" },
+                { code: "MLE", name: "Mile End" },
+                { code: "NEP", name: "Newbury Park" },
+                { code: "NAC", name: "North Acton" },
+                { code: "NHT", name: "Northolt" },
+                { code: "NHG", name: "Notting Hill Gate" },
+                { code: "OXC", name: "Oxford Circus" },
+                { code: "PER", name: "Perivale" },
+                { code: "QWY", name: "Queensway" },
+                { code: "RED", name: "Redbridge" },
+                { code: "ROD", name: "Roding Valley" },
+                { code: "RUG", name: "Ruislip Gardens" },
+                { code: "SBC", name: "Shepherd’s Bush" },
+                { code: "SNB", name: "Snaresbrook" },
+                { code: "SRP", name: "South Ruislip" },
+                { code: "SWF", name: "South Woodford" },
+                { code: "STP", name: "St Paul’s" },
+                { code: "SFD", name: "Stratford" },
+                { code: "THB", name: "Theydon Bois" },
+                { code: "TCR", name: "Tottenham Court Road" },
+                { code: "WAN", name: "Wanstead" },
+                { code: "WAC", name: "West Acton" },
+                { code: "WRP", name: "West Ruislip" },
+                { code: "WCT", name: "White City" },
+                { code: "WFD", name: "Woodford" }
+            ],
+
+            Jubilee: [
+                { code: "BST", name: "Baker Street" },
+                { code: "BER", name: "Bermondsey" },
+                { code: "BDS", name: "Bond Street" },
+                { code: "CWR", name: "Canada Water" },
+                { code: "CWF", name: "Canary Wharf" },
+                { code: "CNT", name: "Canning Town" },
+                { code: "CPK", name: "Canons Park" },
+                { code: "DHL", name: "Dollis Hill" },
+                { code: "FRD", name: "Finchley Road" },
+                { code: "GPK", name: "Green Park" },
+                { code: "KIL", name: "Kilburn" },
+                { code: "KBY", name: "Kingsbury" },
+                { code: "LON", name: "London Bridge" },
+                { code: "NEA", name: "Neasden" },
+                { code: "NGW", name: "North Greenwich" },
+                { code: "QBY", name: "Queensbury" },
+                { code: "SWK", name: "Southwark" },
+                { code: "SJW", name: "St John’s Wood" },
+                { code: "STA", name: "Stanmore" },
+                { code: "SFD", name: "Stratford" },
+                { code: "SWC", name: "Swiss Cottage" },
+                { code: "WLO", name: "Waterloo" },
+                { code: "WPK", name: "Wembley Park" },
+                { code: "WHM", name: "West Ham" },
+                { code: "WHD", name: "West Hampstead" },
+                { code: "WMS", name: "Westminster" },
+                { code: "WLG", name: "Willesden Green" }
+            ]
+
+            // 👉 Same structure continues for:
+            // District, Northern, Piccadilly, Victoria, Metropolitan, Circle/H&C
+        };
+
+        stations["District"] = [
+            { code: "ACT", name: "Acton Town" },
+            { code: "ALE", name: "Aldgate East" },
+            { code: "BKG", name: "Barking" },
+            { code: "BCT", name: "Barons Court" },
+            { code: "BEC", name: "Becontree" },
+            { code: "BLF", name: "Blackfriars" },
+            { code: "BWR", name: "Bow Road" },
+            { code: "BBB", name: "Bromley-by-Bow" },
+            { code: "CST", name: "Cannon Street" },
+            { code: "CHP", name: "Chiswick Park" },
+            { code: "DGE", name: "Dagenham East" },
+            { code: "DGH", name: "Dagenham Heathway" },
+            { code: "EBY", name: "Ealing Broadway" },
+            { code: "ECM", name: "Ealing Common" },
+            { code: "ECT", name: "Earl’s Court" },
+            { code: "EHM", name: "East Ham" },
+            { code: "EPY", name: "East Putney" },
+            { code: "ERD", name: "Edgware Road (H&C)" },
+            { code: "EPK", name: "Elm Park" },
+            { code: "EMB", name: "Embankment" },
+            { code: "FBY", name: "Fulham Broadway" },
+            { code: "GRD", name: "Gloucester Road" },
+            { code: "GUN", name: "Gunnersbury" },
+            { code: "HMD", name: "Hammersmith" },
+            { code: "HST", name: "High Street Kensington" },
+            { code: "HCH", name: "Hornchurch" },
+            { code: "KEW", name: "Kew Gardens" },
+            { code: "MAN", name: "Mansion House" },
+            { code: "MLE", name: "Mile End" },
+            { code: "MON", name: "Monument" },
+            { code: "OLY", name: "Kensington (Olympia)" },
+            { code: "PGR", name: "Parsons Green" },
+            { code: "PLW", name: "Plaistow" },
+            { code: "PUT", name: "Putney Bridge" },
+            { code: "RCP", name: "Ravenscourt Park" },
+            { code: "RMD", name: "Richmond" },
+            { code: "SSQ", name: "Sloane Square" },
+            { code: "SKN", name: "South Kensington" },
+            { code: "SFS", name: "Southfields" },
+            { code: "SJP", name: "St. James's Park" },
+            { code: "STB", name: "Stamford Brook" },
+            { code: "STG", name: "Stepney Green" },
+            { code: "TEM", name: "Temple" },
+            { code: "THL", name: "Tower Hill" },
+            { code: "TGR", name: "Turnham Green" },
+            { code: "UPM", name: "Upminster" },
+            { code: "UPB", name: "Upminster Bridge" },
+            { code: "UPY", name: "Upney" },
+            { code: "UPK", name: "Upton Park" },
+            { code: "VIC", name: "Victoria" },
+            { code: "WBT", name: "West Brompton" },
+            { code: "WHM", name: "West Ham" },
+            { code: "WKN", name: "West Kensington" },
+            { code: "WMS", name: "Westminster" },
+            { code: "WCL", name: "Whitechapel" },
+            { code: "WDN", name: "Wimbledon" },
+            { code: "WMP", name: "Wimbledon Park" }
+        ];
+
+
+        // --- Northern Line ---
+        stations["Northern"] = [
+            { code: "ANG", name: "Angel" },
+            { code: "ARC", name: "Archway" },
+            { code: "BAL", name: "Balham" },
+            { code: "BNK", name: "Bank" },
+            { code: "BPK", name: "Belsize Park" },
+            { code: "BOR", name: "Borough" },
+            { code: "BTX", name: "Brent Cross" },
+            { code: "BUR", name: "Burnt Oak" },
+            { code: "CTN", name: "Camden Town" },
+            { code: "CHF", name: "Chalk Farm" },
+            { code: "CHX", name: "Charing Cross" },
+            { code: "CPC", name: "Clapham Common" },
+            { code: "CPN", name: "Clapham North" },
+            { code: "CPS", name: "Clapham South" },
+            { code: "COL", name: "Colindale" },
+            { code: "CLW", name: "Colliers Wood" },
+            { code: "EFY", name: "East Finchley" },
+            { code: "EDG", name: "Edgware" },
+            { code: "ELE", name: "Elephant and Castle" },
+            { code: "EMB", name: "Embankment" },
+            { code: "EUS", name: "Euston" },
+            { code: "FYC", name: "Finchley Central" },
+            { code: "GGR", name: "Golders Green" },
+            { code: "GST", name: "Goodge Street" },
+            { code: "HMP", name: "Hampstead" },
+            { code: "HND", name: "Hendon Central" },
+            { code: "HBT", name: "High Barnet" },
+            { code: "HIG", name: "Highgate" },
+            { code: "KEN", name: "Kennington" },
+            { code: "KTN", name: "Kentish Town" },
+            { code: "KXX", name: "King's Cross St Pancras" },
+            { code: "LSQ", name: "Leicester Square" },
+            { code: "LON", name: "London Bridge" },
+            { code: "MHE", name: "Mill Hill East" },
+            { code: "MGT", name: "Moorgate" },
+            { code: "MOR", name: "Morden" },
+            { code: "MCR", name: "Mornington Crescent" },
+            { code: "OLD", name: "Old Street" },
+            { code: "OVL", name: "Oval" },
+            { code: "SWM", name: "South Wimbledon" },
+            { code: "STK", name: "Stockwell" },
+            { code: "TBE", name: "Tooting Bec" },
+            { code: "TBY", name: "Tooting Broadway" },
+            { code: "TCR", name: "Tottenham Court Road" },
+            { code: "TOT", name: "Totteridge and Whetstone" },
+            { code: "TPK", name: "Tufnell Park" },
+            { code: "WST", name: "Warren Street" },
+            { code: "WLO", name: "Waterloo" },
+            { code: "WFY", name: "West Finchley" },
+            { code: "WSP", name: "Woodside Park" }
+        ];
+
+
+        // --- Piccadilly Line ---
+        stations["Piccadilly"] = [
+            { code: "ACT", name: "Acton Town" },
+            { code: "ALP", name: "Alperton" },
+            { code: "AGR", name: "Arnos Grove" },
+            { code: "ARL", name: "Arsenal" },
+            { code: "BCT", name: "Barons Court" },
+            { code: "BOS", name: "Boston Manor" },
+            { code: "BGR", name: "Bounds Green" },
+            { code: "CRD", name: "Caledonian Road" },
+            { code: "CFS", name: "Cockfosters" },
+            { code: "COV", name: "Covent Garden" },
+            { code: "ECM", name: "Ealing Common" },
+            { code: "ECT", name: "Earl’s Court" },
+            { code: "ETE", name: "Eastcote" },
+            { code: "FPK", name: "Finsbury Park" },
+            { code: "GRD", name: "Gloucester Road" },
+            { code: "GPK", name: "Green Park" },
+            { code: "HMD", name: "Hammersmith" },
+            { code: "HTX", name: "Hatton Cross" },
+            { code: "HTF", name: "Heathrow Terminal 4" },
+            { code: "HRV", name: "Heathrow Terminal 5" },
+            { code: "HRC", name: "Heathrow Terminals 1,2,3" },
+            { code: "HDN", name: "Hillingdon" },
+            { code: "HOL", name: "Holborn" },
+            { code: "HRD", name: "Holloway Road" },
+            { code: "HNC", name: "Hounslow Central" },
+            { code: "HNE", name: "Hounslow East" },
+            { code: "HNW", name: "Hounslow West" },
+            { code: "HPC", name: "Hyde Park Corner" },
+            { code: "ICK", name: "Ickenham" },
+            { code: "KXX", name: "King's Cross St Pancras" },
+            { code: "KNB", name: "Knightsbridge" },
+            { code: "LSQ", name: "Leicester Square" },
+            { code: "MNR", name: "Manor House" },
+            { code: "NEL", name: "North Ealing" },
+            { code: "NFD", name: "Northfields" },
+            { code: "OAK", name: "Oakwood" },
+            { code: "OST", name: "Osterley" },
+            { code: "PRY", name: "Park Royal" },
+            { code: "PIC", name: "Piccadilly Circus" },
+            { code: "RLN", name: "Rayners Lane" },
+            { code: "RUI", name: "Ruislip" },
+            { code: "RUM", name: "Ruislip Manor" },
+            { code: "RSQ", name: "Russell Square" },
+            { code: "SEL", name: "South Ealing" },
+            { code: "SHR", name: "South Harrow" },
+            { code: "SKN", name: "South Kensington" },
+            { code: "SGT", name: "Southgate" },
+            { code: "SHL", name: "Sudbury Hill" },
+            { code: "STN", name: "Sudbury Town" },
+            { code: "TGR", name: "Turnham Green" },
+            { code: "TPL", name: "Turnpike Lane" },
+            { code: "UXB", name: "Uxbridge" },
+            { code: "WGN", name: "Wood Green" }
+        ];
+
+
+        // --- Victoria Line ---
+        stations["Victoria"] = [
+            { code: "BHR", name: "Blackhorse Road" },
+            { code: "BRX", name: "Brixton" },
+            { code: "EUS", name: "Euston" },
+            { code: "FPK", name: "Finsbury Park" },
+            { code: "GPK", name: "Green Park" },
+            { code: "HBY", name: "Highbury and Islington" },
+            { code: "KXX", name: "King's Cross St Pancras" },
+            { code: "OXC", name: "Oxford Circus" },
+            { code: "PIM", name: "Pimlico" },
+            { code: "SVS", name: "Seven Sisters" },
+            { code: "STK", name: "Stockwell" },
+            { code: "TTH", name: "Tottenham Hale" },
+            { code: "VUX", name: "Vauxhall" },
+            { code: "VIC", name: "Victoria" },
+            { code: "WAL", name: "Walthamstow Central" },
+            { code: "WST", name: "Warren Street" }
+        ];
+
+
+        // --- Metropolitan Line ---
+        stations["Metropolitan"] = [
+            { code: "ALD", name: "Aldgate" },
+            { code: "AME", name: "Amersham" },
+            { code: "BST", name: "Baker Street" },
+            { code: "BAR", name: "Barbican" },
+            { code: "CLF", name: "Chalfont and Latimer" },
+            { code: "CWD", name: "Chorleywood" },
+            { code: "CRX", name: "Croxley" },
+            { code: "ETE", name: "Eastcote" },
+            { code: "ESQ", name: "Euston Square" },
+            { code: "FAR", name: "Farringdon" },
+            { code: "FRD", name: "Finchley Road" },
+            { code: "GPS", name: "Great Portland Street" },
+            { code: "HOH", name: "Harrow on the Hill" },
+            { code: "HDN", name: "Hillingdon" },
+            { code: "ICK", name: "Ickenham" },
+            { code: "KXX", name: "King's Cross St Pancras" },
+            { code: "LST", name: "Liverpool Street" },
+            { code: "MPK", name: "Moor Park" },
+            { code: "MGT", name: "Moorgate" },
+            { code: "NHR", name: "North Harrow" },
+            { code: "NWP", name: "Northwick Park" },
+            { code: "NWD", name: "Northwood" },
+            { code: "NWH", name: "Northwood Hills" },
+            { code: "PIN", name: "Pinner" },
+            { code: "RLN", name: "Rayners Lane" },
+            { code: "RKY", name: "Rickmansworth" },
+            { code: "RUI", name: "Ruislip" },
+            { code: "RUM", name: "Ruislip Manor" },
+            { code: "UXB", name: "Uxbridge" },
+            { code: "WAT", name: "Watford" },
+            { code: "WPK", name: "Wembley Park" },
+            { code: "WHR", name: "West Harrow" }
+        ];
+
+
+        // --- Circle & Hammersmith & City ---
+        stations["Circle/H&C"] = [
+            { code: "ALD", name: "Aldgate" },
+            { code: "ALE", name: "Aldgate East" },
+            { code: "BST", name: "Baker Street" },
+            { code: "BAR", name: "Barbican" },
+            { code: "BKG", name: "Barking" },
+            { code: "BLF", name: "Blackfriars" },
+            { code: "BWR", name: "Bow Road" },
+            { code: "BBB", name: "Bromley-by-Bow" },
+            { code: "CST", name: "Cannon Street" },
+            { code: "EHM", name: "East Ham" },
+            { code: "ERD", name: "Edgware Road (H&C)" },
+            { code: "EMB", name: "Embankment" },
+            { code: "ESQ", name: "Euston Square" },
+            { code: "FAR", name: "Farringdon" },
+            { code: "GRD", name: "Gloucester Road" },
+            { code: "GPS", name: "Great Portland Street" },
+            { code: "HMS", name: "Hammersmith" },
+            { code: "HST", name: "High Street Kensington" },
+            { code: "KXX", name: "King's Cross St Pancras" },
+            { code: "LST", name: "Liverpool Street" },
+            { code: "MAN", name: "Mansion House" },
+            { code: "MLE", name: "Mile End" },
+            { code: "MON", name: "Monument" },
+            { code: "MGT", name: "Moorgate" },
+            { code: "PAD", name: "Paddington" },
+            { code: "PLW", name: "Plaistow" },
+            { code: "SSQ", name: "Sloane Square" },
+            { code: "SKN", name: "South Kensington" },
+            { code: "SJP", name: "St. James's Park" },
+            { code: "STG", name: "Stepney Green" },
+            { code: "TEM", name: "Temple" },
+            { code: "THL", name: "Tower Hill" },
+            { code: "UPK", name: "Upton Park" },
+            { code: "VIC", name: "Victoria" },
+            { code: "WHM", name: "West Ham" },
+            { code: "WMS", name: "Westminster" },
+            { code: "WCL", name: "Whitechapel" }
+        ];
+
+
+
+        Object.keys(stations).forEach(line => {
+            const optgroup = document.createElement("optgroup");
+            optgroup.label = line;
+
+            stations[line].forEach(station => {
+                const option = document.createElement("option");
+                option.value = station.code;
+                option.textContent = station.name + " (" + station.code + ")";
+                optgroup.appendChild(option);
+            });
+
+            stationInput.appendChild(optgroup);
         });
 
         stationInput.value = monitoredStation;
