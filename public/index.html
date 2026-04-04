@@ -434,8 +434,8 @@
                 <input type="number" id="checkIntervalInput" min="1" max="60"
                     style="width: 50px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
             </div>
-            <button class="cache-btn" id="alert5amBtn">🔔 Local Alert: OFF</button>
-            <button class="cache-btn" id="serverAlertBtn">📡 Server Alert: OFF</button>
+            <button class="cache-btn" id="alert5amBtn">🔕 Local Alert: OFF</button>
+            <button class="cache-btn" id="serverAlertBtn">🔕 Server Alert: OFF</button>
             <button class="cache-btn" id="test5amBtn">🧪 Test Local Alert</button>
             <div id="cacheStatus"></div>
         </div>
@@ -714,10 +714,10 @@
         });
 
         function updateAlertButtons() {
-            alert5amBtn.textContent = alert5amEnabled ? '🔕 Local Alert: ON' : '🔔 Local Alert: OFF';
+            alert5amBtn.textContent = alert5amEnabled ? '🔔 Local Alert: ON' : '🔕 Local Alert: OFF';
             alert5amBtn.style.color = alert5amEnabled ? '#0f0' : '#ff9729';
 
-            serverAlertBtn.textContent = serverAlertEnabled ? '🔕 Server Alert: ON' : '📡 Server Alert: OFF';
+            serverAlertBtn.textContent = serverAlertEnabled ? '📡 Server Alert: ON' : '🔕 Server Alert: OFF';
             serverAlertBtn.style.color = serverAlertEnabled ? '#0f0' : '#ff9729';
         }
 
