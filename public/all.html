@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Tube</title>
-  
+
     <style>
         body {
             font-family: 'Courier New', Courier, monospace;
@@ -135,21 +135,10 @@
 
 <body>
     <div>
-
         <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
     </div>
-    <span class="station-name">Stepney Green Live</span>
+    <span class="station-name">Tube Live</span>
     <div id="arrivals"></div>
-    <h3>Marriot Tube + Bus Live</h3>
-    <div class="journeyContainer" id="journeyContainer1"></div>
-
-    <h3>Marriot 5am Tube only</h3>
-    <div class="journeyContainer" id="journeyContainer"></div>
-
-    <h3>Marriot 5am Bus only</h3>
-    <div class="journeyContainer" id="journeyContainer2"></div>
-
-
     <script>
 
         function xmlToJson(xml) {
@@ -222,40 +211,26 @@
                     // Parse XML string into a DOM object
                     const parser = new DOMParser();
                     const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-              
-              			const json = xmlToJson(xmlDoc);
-              
-   			const array = ['BKG', 'STG', 'ALD']
-               
-              try{
-              
-             			json.ROOT.S.forEach(item => { 
-                    
-                    if(array.includes(item['@attributes']?.Code)  ) { 
-                      
-                      updateArrivals(item, item['@attributes']?.N);
-                                                        
-                                                        }
-                    
-                  });
-                                               
-                                           
-                  
-                  }
-              catch (e) {
-              }
 
-                   
+                    const json = xmlToJson(xmlDoc);
 
+                    const array = ['BKG', 'STG', 'ALD']
+
+                    try {
+                        json.ROOT.S.forEach(item => {
+                            if (array.includes(item['@attributes']?.Code)) {
+                                updateArrivals(item, item['@attributes']?.N);
+                            }
+                        });
+                    }
+                    catch (e) {
+                    }
                 })
                 .catch(error => {
                     arrivals.innerHTML = "<h2 style='color: red;'>Error fetching tube data</h2>";
                     console.error('Error fetching data:', error)
                 });
         }
-      
-      
- 
 
         // Function to update arrival times on the page
         function updateArrivals(data, name) {
@@ -264,22 +239,25 @@
 
             // Group the data by platform
             const platforms = {};
-          
-            if(data.P.T == undefined || data.P.length == 0 ) {} 
+
+            if (data.P.T == undefined || data.P.length == 0) {
+                arrivalsContainer.innerHTML = "<h2 style='color: red;'>No arrivals found</h2>";
+                return;
+            }
 
             data.P.forEach(item0 => {
-              	if(item0.T != undefined && item0.T.length > 0 )
-                platforms[item0['@attributes']?.N] = item0.T; 
-              else console.log(data)
-               
+                if (item0.T != undefined && item0.T.length > 0)
+                    platforms[item0['@attributes']?.N] = item0.T;
+                else console.log(data)
+
             });
 
             const sortedPlatforms = Object.keys(platforms).sort((a, b) => {
 
                 return a - b;
             });
-          
-      
+
+
 
 
             // Create platform sections and display the arrivals
@@ -288,14 +266,14 @@
                 platformSection.classList.add('platform-section');
 
                 const platformHeader = document.createElement('h3');
-                platformHeader.textContent = platform + "- " + name ;
+                platformHeader.textContent = platform + "- " + name;
                 platformSection.appendChild(platformHeader);
-              
-     
-              
-              if( platforms[platform].length == 0 ) return;
-              
-              if( platforms[platform] == undefined ) return;
+
+
+
+                if (platforms[platform].length == 0) return;
+
+                if (platforms[platform] == undefined) return;
 
 
                 platforms[platform].forEach((item1, i) => {
@@ -307,15 +285,15 @@
                     arrivalDiv.classList.add('arrival-time');
                     const item = item1['@attributes'];
 
-                
+
                     const destination = item.DE?.replace("Underground Station", "") || 'Destination Unknown';
                     const currentLocation = item.L || 'Location Unknown';
                     const timeToStation = Math.floor(item.ST / 60) || 0;
                     const isEmpty = (str) => (!str?.length);
                     var expectedArrival = "Now";
-                    
-                    if(!isEmpty(item.AT) ){
-                        let [h, m, s] =  item.DT.split(":").map(Number);
+
+                    if (!isEmpty(item.AT)) {
+                        let [h, m, s] = item.DT.split(":").map(Number);
                         let date = new Date(0, 0, 0, h, m, s);
                         date.setHours(date.getHours() + 1);
                         const pad = n => n.toString().padStart(2, "0");
@@ -345,65 +323,6 @@
         setInterval(fetchArrivals, 30000);  // Fetch data every 30 seconds
 
     </script>
-    <script>
-        async function fetchJourneys(api, containerName) {
-            const container = document.getElementById(containerName);
-            try {
-                const response = await fetch(api);
-                const data = await response.json();
-                displayJourneys(data.journeys, container);
-            } catch (error) {
-                console.error("Error fetching journey data:", error);
-                container.innerHTML = "Failed to load journey data.";
-            }
-        }
-
-        function displayJourneys(journeys, container) {
-            container.innerHTML = "";
-
-
-
-            if (!journeys || journeys.length === 0) {
-                container.innerHTML = "No journeys available.";
-                return;
-            }
-
-            journeys.forEach(journey => {
-                const journeyDiv = document.createElement("div");
-                journeyDiv.className = "journey";
-
-                const startTime = new Date(journey.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const arrivalTime = new Date(journey.arrivalDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                journeyDiv.innerHTML = `
-                 
-                     <p> <strong> ${startTime} - ${arrivalTime} </strong>  <span class="time-left"> ( ${journey.duration}' )</span></p>
-         </h3>
-                     <div class="legs">
-                         ${journey.legs.map((leg, i) => `
-                             <p>• ${leg.instruction.summary}  ${new Date(leg.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${leg.duration}')</p>
-                         `).join("")}
-                     </div>
-                 `;
-
-                container.appendChild(journeyDiv);
-            });
-        }
-
-        const API_URL_now = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=bus,tube&walkingSpeed=fast&useRealTimeLiveArrivals=true";
-        const API_URL_5AM_tube = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=20";
-        const API_URL_5AM_Bus = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube,bus&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=12";
-
-        fetchJourneys(API_URL_5AM_tube, "journeyContainer");
-        setInterval(() => fetchJourneys(API_URL_5AM_tube, "journeyContainer"), 120000);
-
-        fetchJourneys(API_URL_5AM_Bus, "journeyContainer2");
-        setInterval(() => fetchJourneys(API_URL_5AM_Bus, "journeyContainer2"), 120000);
-
-        fetchJourneys(API_URL_now, "journeyContainer1");
-        setInterval(() => fetchJourneys(API_URL_now, "journeyContainer1"), 20000);
-    </script>
-
     <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
         <button id="cogBtn"
             style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
