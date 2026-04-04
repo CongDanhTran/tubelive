@@ -260,7 +260,7 @@ async function performGlobalCheck() {
                             console.log(`Train ${monitoredSetNo} not found in JSON for ${key} within time window (API Time: ${whenCreatedTime}, Date: ${today}).`);
                             const lineName = lineNames[sub.line] || sub.line;
                             sendPush(subscription, {
-                                title: `[${today}] ${lineName} ${monitoredSetNo} - No tube to work`,
+                                title: `[${today}] No tube ${monitoredSetNo}`,
                                 body: `[${today}] ${lineName} ${monitoredSetNo} - No tube to work`,
                             });
                         }
