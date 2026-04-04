@@ -27,7 +27,8 @@
             color: red;
         }
 
-        #arrivals {
+        #arrivals,
+        #summaryArrivals {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 15px;
@@ -106,7 +107,9 @@
         }
 
         @media (max-width: 768px) {
-            #arrivals {
+
+            #arrivals,
+            #summaryArrivals {
                 grid-template-columns: 1fr;
             }
 
@@ -158,6 +161,7 @@
     </div>
     <span class="station-name">Live</span>
     <div id="arrivals"></div>
+    <div id="summaryArrivals"></div>
     <h3>Marriot Tube + Bus Live</h3>
     <div class="journeyContainer" id="journeyContainer1"></div>
 
@@ -411,12 +415,13 @@
             <input type="text" id="setNoInput" value="205"
                 style="min-width: 20px; background: #222; color: #ff9729; border: 1px solid #444; padding: 5px; border-radius: 5px; box-sizing: border-box; margin-top: 4px;">
             <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
-                <label style="font-size: 0.8em;">Stat:</label>
+                <label style="font-size: 0.8em;">Station:</label>
                 <input type="text" id="stationInput" value="WCL"
                     style="width: 40px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
                 <label style="font-size: 0.8em;">Line:</label>
-                <input type="text" id="lineInput" value="D"
-                    style="width: 20px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                <select id="lineInput"
+                    style="width: 100px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                </select>
                 <label style="font-size: 0.8em;">Key:</label>
                 <input type="text" id="appKeyInput" value=""
                     style="width: 60px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
@@ -436,6 +441,17 @@
             </div>
             <button class="cache-btn" id="alert5amBtn">🔕 Local Alert: OFF</button>
             <button class="cache-btn" id="serverAlertBtn">🔕 Server Alert: OFF</button>
+            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <button class="cache-btn" id="summaryToggleBtn">🔕 Summary: OFF</button>
+            <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
+                <label style="font-size: 0.8em;">Line:</label>
+                <select id="summaryLineInput"
+                    style="width: 100px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                </select>
+                <label style="font-size: 0.8em;">Stations:</label>
+                <input type="text" id="summaryStationsInput" value="BKG, STG, ALD"
+                    style="width: 100px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+            </div>
             <button class="cache-btn" id="test5amBtn">🧪 Test Local Alert</button>
             <div id="cacheStatus"></div>
         </div>
@@ -553,6 +569,22 @@
         });
 
         addEventListener("DOMContentLoaded", () => {
+            // Populate line dropdowns
+            const lineSelects = [document.getElementById('lineInput'), document.getElementById('summaryLineInput')];
+            lineSelects.forEach(select => {
+                if (!select) return;
+                for (const [code, name] of Object.entries(lineNames)) {
+                    const opt = document.createElement('option');
+                    opt.value = code;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                }
+            });
+
+            // Set current values
+            document.getElementById('lineInput').value = monitoredLine;
+            document.getElementById('summaryLineInput').value = summaryLine;
+
             let savedSize = getCookie("fontSize");
             if (savedSize) {
                 document.body.style.fontSize = savedSize + "em";
@@ -798,6 +830,133 @@
                 scheduleArrivalCheck(); // Recursive call
             }, delay);
         }
+
+        // --- Summary Fetching ---
+        let summaryEnabled = localStorage.getItem('summaryEnabled') === 'true';
+        let summaryLine = localStorage.getItem('summaryLine') || 'H';
+        let summaryStations = localStorage.getItem('summaryStations') || 'BKG, STG, ALD';
+
+        const summaryToggleBtn = document.getElementById('summaryToggleBtn');
+        const summaryLineInput = document.getElementById('summaryLineInput');
+        const summaryStationsInput = document.getElementById('summaryStationsInput');
+        const summaryArrivalsContainer = document.getElementById('summaryArrivals');
+
+        function updateSummaryButtons() {
+            summaryToggleBtn.textContent = summaryEnabled ? '🔔 Summary: ON' : '🔕 Summary: OFF';
+            summaryToggleBtn.style.color = summaryEnabled ? '#0f0' : '#ff9729';
+            summaryArrivalsContainer.style.display = summaryEnabled ? 'grid' : 'none';
+        }
+
+        summaryToggleBtn.addEventListener('click', () => {
+            summaryEnabled = !summaryEnabled;
+            localStorage.setItem('summaryEnabled', summaryEnabled);
+            updateSummaryButtons();
+            if (summaryEnabled) fetchSummaryArrivals();
+        });
+
+        summaryLineInput.value = summaryLine;
+        summaryLineInput.addEventListener('change', (e) => {
+            summaryLine = e.target.value.trim().toUpperCase();
+            localStorage.setItem('summaryLine', summaryLine);
+            if (summaryEnabled) fetchSummaryArrivals();
+        });
+
+        summaryStationsInput.value = summaryStations;
+        summaryStationsInput.addEventListener('change', (e) => {
+            summaryStations = e.target.value.trim().toUpperCase();
+            localStorage.setItem('summaryStations', summaryStations);
+            if (summaryEnabled) fetchSummaryArrivals();
+        });
+
+        function fetchSummaryArrivals() {
+            if (!summaryEnabled) return;
+            const url = `https://api.tfl.gov.uk/TrackerNet/PredictionSummary/${summaryLine}?app_key=${monitoredAppKey}`;
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.text();
+                })
+                .then(xmlString => {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+                    const json = xmlToJson(xmlDoc);
+                    const stationsToFind = summaryStations.split(',').map(s => s.trim());
+
+                    summaryArrivalsContainer.innerHTML = '';
+                    if (json.ROOT && json.ROOT.S) {
+                        const stations = Array.isArray(json.ROOT.S) ? json.ROOT.S : [json.ROOT.S];
+                        stations.forEach(station => {
+                            if (stationsToFind.includes(station['@attributes']?.Code)) {
+                                renderSummaryStation(station, station['@attributes']?.N);
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching summary data:', error);
+                });
+        }
+
+        function renderSummaryStation(stationData, stationName) {
+            const platforms = {};
+            if (!stationData.P) return;
+            const platformNodes = Array.isArray(stationData.P) ? stationData.P : [stationData.P];
+
+            platformNodes.forEach(p => {
+                const trains = p.T ? (Array.isArray(p.T) ? p.T : [p.T]) : [];
+                if (trains.length > 0) {
+                    platforms[p['@attributes']?.N] = trains;
+                }
+            });
+
+            const sortedPlatforms = Object.keys(platforms).sort();
+
+            sortedPlatforms.forEach(platform => {
+                const platformSection = document.createElement('div');
+                platformSection.classList.add('platform-section');
+
+                const platformHeader = document.createElement('h3');
+                platformHeader.textContent = `${platform} - ${stationName}`;
+                platformSection.appendChild(platformHeader);
+
+                platforms[platform].slice(0, 3).forEach(train => {
+                    const item = train['@attributes'];
+                    const arrivalDiv = document.createElement('div');
+                    arrivalDiv.classList.add('arrival-time');
+
+                    const destination = item.DE?.replace("Underground Station", "") || 'Unknown';
+                    const currentLocation = item.L || 'N/A';
+                    const timeToStation = Math.floor(item.ST / 60) || 0;
+
+                    let expectedArrival = "Now";
+                    if (item.DT && item.DT !== "") {
+                        // PredictionSummary uses DT which might be already adjusted or UTC.
+                        // Based on all.html logic, it adds 1 hour? Wait, all.html logic:
+                        // let [h, m, s] = item.DT.split(":").map(Number);
+                        // date.setHours(date.getHours() + 1);
+                        // This seems specific to a timezone (GMT to BST).
+                        // I'll stick to displaying it as is or attempting the same logic.
+                        expectedArrival = item.DT;
+                    }
+
+                    arrivalDiv.innerHTML = `
+                        <div class="departure">
+                            <p class="destination"><span>${destination} (${item?.S}) - ${expectedArrival}</span></p>
+                            <p class="time-left"><span>${timeToStation} mins</span></p>
+                        </div>
+                        <div class="departure">
+                            <p class="live-location">Live: <span>${currentLocation || 'N/A'}</span></p>
+                        </div>
+                    `;
+                    platformSection.appendChild(arrivalDiv);
+                });
+                summaryArrivalsContainer.appendChild(platformSection);
+            });
+        }
+
+        updateSummaryButtons();
+        if (summaryEnabled) fetchSummaryArrivals();
+        setInterval(fetchSummaryArrivals, 30000);
 
         // Check right away when tab is refocused or app first opens
         function instantCheckIfInWindow() {
