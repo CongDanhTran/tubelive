@@ -1,7 +1,7 @@
 // Version of this service worker - increment when deploying updates
 const VERSION = 'v5';
 const CACHE_NAME = `stepney-green-${VERSION}`;
-const CACHED_URLS = ['/', '/nearby', '/manifest.json', '/192-192.png', '/512-512.png', "manifest_1.json"];
+const CACHED_URLS = ['/', '/nearby', '/manifest.json', '/192-192.png', '/512-512.png'];
 
 // Install: cache the HTML shell
 self.addEventListener('install', event => {
@@ -51,7 +51,8 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const isNavigation = event.request.mode === 'navigate';
   const isHtmlGet = event.request.method === 'GET' &&
-    event.request.headers.get('accept')?.includes('text/html') &&
+    (event.request.headers.get('accept')?.includes('text/html') ||
+      url.pathname === '/manifest.json') &&
     url.origin === self.location.origin;
 
   if (isNavigation || isHtmlGet) {

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Tube</title>
-    <link rel="manifest" href="manifest_1.json">
+    <link rel="manifest" href="/manifest.json?name=Nearby+Tubes&short_name=Nearby&start_url=/nearby.html">
 
     <style>
         body {
@@ -179,7 +179,7 @@
                 try {
                     const cache = await caches.open('stepney-green-v4');
                     await cache.add('/nearby');
-                    await cache.add('/manifest_1.json');
+                    await cache.add('/manifest.json?name=Nearby+Tubes&short_name=Nearby&start_url=/nearby.html');
                     await cache.add('/192-192.png');
                     await cache.add('/512-512.png');
                     cacheStatus.style.color = '#0f0';

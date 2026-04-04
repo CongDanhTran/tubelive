@@ -15,6 +15,31 @@ const SUB_PATH = path.join(__dirname + "/data", 'subscriptions.json');
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// Dynamic Manifest Route
+app.get('/manifest.json', (req, res) => {
+    const manifestPath = path.join(__dirname, 'public', 'manifest.json');
+    fs.readFile(manifestPath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading manifest:', err);
+            return res.status(500).send('Error reading manifest');
+        }
+        try {
+            let manifest = JSON.parse(data);
+            // Override with query parameters if present
+            if (req.query.name) manifest.name = req.query.name;
+            if (req.query.short_name) manifest.short_name = req.query.short_name;
+            if (req.query.start_url) manifest.start_url = req.query.start_url;
+            
+            res.setHeader('Content-Type', 'application/manifest+json');
+            res.send(JSON.stringify(manifest, null, 2));
+        } catch (e) {
+            console.error('Error parsing manifest:', e);
+            res.status(500).send('Error parsing manifest');
+        }
+    });
+});
+
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // 1. Initialise VAPID keys from .env
