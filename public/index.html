@@ -510,7 +510,7 @@
             } catch (e) {
                 // Fallback if SW not yet controlling the page
                 try {
-                    const cache = await caches.open('stepney-green-v2');
+                    const cache = await caches.open('tubelive');
                     await cache.add('/index');
                     await cache.add('/manifest.json');
                     await cache.add('/192-192.png');
@@ -534,7 +534,7 @@
                 cacheStatus.textContent = '✓ Cache cleared!';
             } catch (e) {
                 try {
-                    await caches.delete('stepney-green-v1');
+                    await caches.delete();
                     cacheStatus.style.color = '#0f0';
                     cacheStatus.textContent = '✓ Cache cleared!';
                 } catch (err) {
