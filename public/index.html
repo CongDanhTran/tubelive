@@ -351,7 +351,11 @@
         <div id="sliderContainer"
             style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:1em; box-sizing: border-box; max-width: 90vw; max-height: 90vh; overflow-y: scroll;">
             <label for="fontSlider">Font Size:</label>
-            <input type="range" id="fontSlider" min="0.8" max="6" step="0.1">
+            <input type="range" id="fontSlider" min="0.8" max="6" step="0.1" style="width: 100%;">
+            <label for="lineHeightSlider" style="margin-top: 5px; display: block;">Line Height:</label>
+            <input type="range" id="lineHeightSlider" min="1" max="3" step="0.1" style="width: 100%;">
+            <label for="letterSpacingSlider" style="margin-top: 5px; display: block;">Letter Spacing:</label>
+            <input type="range" id="letterSpacingSlider" min="-2" max="10" step="0.5" style="width: 100%;">
             <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
             <button class="cache-btn" id="recacheBtn">🔄 Re-cache page</button>
             <button class="cache-btn" id="clearCacheBtn">🗑️ Clear cache</button>
@@ -513,13 +517,48 @@
             return "";
         }
 
+        function applyDynamicUserStyles() {
+            let styleTag = document.getElementById("dynamic-user-styles");
+            if (!styleTag) {
+                styleTag = document.createElement("style");
+                styleTag.id = "dynamic-user-styles";
+                document.head.appendChild(styleTag);
+            }
+            
+            const fs = getCookie("fontSize") || 1;
+            const lh = getCookie("lineHeight") || 1.2;
+            const ls = getCookie("letterSpacing") || 0;
+            
+            styleTag.innerHTML = `
+                body {
+                    font-size: ${fs}em !important;
+                }
+                body * {
+                    line-height: ${lh} !important;
+                    letter-spacing: ${ls}px !important;
+                }
+            `;
+        }
+
         const fontSlider = document.getElementById("fontSlider");
+        const lineHeightSlider = document.getElementById("lineHeightSlider");
+        const letterSpacingSlider = document.getElementById("letterSpacingSlider");
         const sliderContainer = document.getElementById("sliderContainer");
         const cogBtn = document.getElementById("cogBtn");
 
         fontSlider.addEventListener("input", (e) => {
-            document.body.style.fontSize = e.target.value + "em";
             setCookie("fontSize", e.target.value, 30);
+            applyDynamicUserStyles();
+        });
+
+        lineHeightSlider.addEventListener("input", (e) => {
+            setCookie("lineHeight", e.target.value, 30);
+            applyDynamicUserStyles();
+        });
+
+        letterSpacingSlider.addEventListener("input", (e) => {
+            setCookie("letterSpacing", e.target.value, 30);
+            applyDynamicUserStyles();
         });
 
         addEventListener("DOMContentLoaded", () => {
@@ -539,13 +578,11 @@
             document.getElementById('lineInput').value = monitoredLine;
             document.getElementById('summaryLineInput').value = summaryLine;
 
-            let savedSize = getCookie("fontSize");
-            if (savedSize) {
-                document.body.style.fontSize = savedSize + "em";
-                fontSlider.value = savedSize;
-            } else {
-                fontSlider.value = 1;
-            }
+            fontSlider.value = getCookie("fontSize") || 1;
+            lineHeightSlider.value = getCookie("lineHeight") || 1.2;
+            letterSpacingSlider.value = getCookie("letterSpacing") || 0;
+
+            applyDynamicUserStyles();
         });
 
         cogBtn.addEventListener("click", (e) => {
