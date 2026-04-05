@@ -157,6 +157,7 @@
         style="position:absolute;background: #1a1a1a;color: #ff9729;border: 1px solid #444;padding: 8px 15px;border-radius: 5px;font-family: 'Courier New', Courier, monospace;font-size: 0.6em;cursor: pointer;left: 0;top: 0;">
         🔄
     </button>
+    <div style="color: red; font-weight: bold; text-align: center;" id="status"></div>
 
     <div>
         <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
@@ -164,14 +165,6 @@
     <span class="station-name">Live</span>
     <div id="arrivals"></div>
     <div id="summaryArrivals"></div>
-    <h3>Marriot Tube + Bus Live</h3>
-    <div class="journeyContainer" id="journeyContainer1"></div>
-
-    <h3>Marriot 5am Tube only</h3>
-    <div class="journeyContainer" id="journeyContainer"></div>
-
-    <h3>Marriot 5am Bus only</h3>
-    <div class="journeyContainer" id="journeyContainer2"></div>
 
     <script>
         function xmlToJson(xml) {
@@ -349,56 +342,6 @@
 
         fetchArrivals();
         setInterval(fetchArrivals, 20000);
-    </script>
-
-    <script>
-        async function fetchJourneys(api, containerName) {
-            const container = document.getElementById(containerName);
-            try {
-                const response = await fetch(api);
-                const data = await response.json();
-                displayJourneys(data.journeys, container);
-            } catch (error) {
-                console.error("Error fetching journey data:", error);
-                container.innerHTML = "Failed to load journey data.";
-            }
-        }
-
-        function displayJourneys(journeys, container) {
-            container.innerHTML = "";
-            if (!journeys || journeys.length === 0) {
-                container.innerHTML = "No journeys available.";
-                return;
-            }
-            journeys.forEach(journey => {
-                const journeyDiv = document.createElement("div");
-                journeyDiv.className = "journey";
-                const startTime = new Date(journey.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const arrivalTime = new Date(journey.arrivalDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                journeyDiv.innerHTML = `
-                    <p><strong>${startTime} - ${arrivalTime}</strong> <span class="time-left">(${journey.duration}')</span></p>
-                    <div class="legs">
-                        ${journey.legs.map((leg) => `
-                            <p>• ${leg.instruction.summary} ${new Date(leg.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${leg.duration}')</p>
-                        `).join("")}
-                    </div>
-                `;
-                container.appendChild(journeyDiv);
-            });
-        }
-
-        const API_URL_now = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=bus,tube&walkingSpeed=fast&useRealTimeLiveArrivals=true";
-        const API_URL_5AM_tube = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=20";
-        const API_URL_5AM_Bus = "https://api.tfl.gov.uk/Journey/JourneyResults/E14AQ/to/marriotcountyhall?mode=tube,bus&walkingSpeed=fast&useRealTimeLiveArrivals=true&time=0500&maxWalkingMinutes=12";
-
-        fetchJourneys(API_URL_5AM_tube, "journeyContainer");
-        setInterval(() => fetchJourneys(API_URL_5AM_tube, "journeyContainer"), 120000);
-
-        fetchJourneys(API_URL_5AM_Bus, "journeyContainer2");
-        setInterval(() => fetchJourneys(API_URL_5AM_Bus, "journeyContainer2"), 120000);
-
-        fetchJourneys(API_URL_now, "journeyContainer1");
-        setInterval(() => fetchJourneys(API_URL_now, "journeyContainer1"), 20000);
     </script>
 
     <!-- Cog settings panel -->
@@ -1189,7 +1132,14 @@
 
         updateAlertButtons();
 
-        document.getElementById('test5amBtn').addEventListener('click', () => {
+        document.getElementById('test5amBtn').addEventListener('click', async () => {
+            if (Notification.permission === 'default' || Notification.permission !== 'granted') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    document.getElementById('status').innerText = "Notification permission not granted.";
+                    return;
+                }
+            }
             performArrivalCheck(true); // Force check now
         });
 
@@ -1434,7 +1384,7 @@
 
                 if (!found) {
                     console.log(`SetNo ${monitoredSetNo} not found in the window [${timeFrom} - ${timeTo}] on ${today}.`);
-                    showLocalNotification(force ? `Test [${today}]` : `Alert [${today}]`, `No train line ${lineNames[monitoredLine]} ${monitoredSetNo} to ${stationName}!`);
+                    showLocalNotification(force ? `Test [${today}]` : `Alert [${today}]`, `No tube ${lineNames[monitoredLine]} ${monitoredSetNo} to ${stationName}`);
                 }
             } catch (error) {
                 console.error('Error during scheduled check:', error);
@@ -1443,9 +1393,17 @@
         }
 
         async function showLocalNotification(title, body) {
-            if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') {
-                console.warn("Notification not showed: Permission not granted or no SW.");
+            if (!('serviceWorker' in navigator)) {
+                console.warn("Notification not showed: No SW.");
                 return;
+            }
+            if (Notification.permission !== 'granted') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    document.getElementById('status').innerText = "Notification permission not granted.";
+                    console.warn("Notification not showed: Permission not granted.");
+                    return;
+                }
             }
             const registration = await navigator.serviceWorker.ready;
             registration.showNotification(title, {
