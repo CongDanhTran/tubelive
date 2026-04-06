@@ -111,14 +111,12 @@ function updateArrivals(data) {
     arrivalsContainer.innerHTML = '';
     const platforms = {};
 
-    console.log(data);
-
     if (!data.ROOT || !data.ROOT.S || !data.ROOT.S.P || data.ROOT.S.P.filter(item0 => item0.T?.length > 0).length === 0) {
         arrivalsContainer.innerHTML = '<h2 style="color: red;">No tube</h2>';
         return;
     }
 
-    const stationName = data.ROOT.S['@attributes'].N;
+    const stationName = data.ROOT.S['@attributes'].N?.replace(".", "");
 
     if (stationName && stationName !== "") {
         document.querySelector('.station-name').textContent = stationName;
@@ -156,14 +154,31 @@ function updateArrivals(data) {
             }
 
             arrivalDiv.innerHTML = `
-                            <div class="departure">
-                                <p class="destination"><span>${destination} (${item?.SetNo}) - ${expectedArrival}</span></p>
-                                <p class="time-left"><span>${timeToStation} mins</span></p>
+                            <div class="departure" style="display: flex; align-items: center;">
+                                <p class="destination" style="flex-grow: 1; margin: 0;"><span>${destination} (${item?.SetNo}) - ${expectedArrival}</span></p>
+                                <span style="cursor: pointer; margin-right: 5px; color: #ff9729;" class="route-arrow">🔽</span>
+                                <p class="time-left" style="margin: 0;"><span>${timeToStation} mins</span></p>
                             </div>
-                            <div class="departure">
-                                <p class="live-location">Live: <span>${currentLocation || 'N/A'}</span></p>
+                            <div class="departure" style="margin-top: 2px;">
+                                <p class="live-location" style="margin: 0;">Live: <span>${currentLocation || 'N/A'}</span></p>
                             </div>
                         `;
+            if (item?.SetNo && item.SetNo !== "000") {
+                const arrow = arrivalDiv.querySelector('.route-arrow');
+                const lineName = lineNames[monitoredLine];
+                arrow.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleVehicleRoute(arrivalDiv, item.SetNo, lineName, destination, stationName, arrow);
+                });
+                arrivalDiv.style.cursor = 'pointer';
+                arrivalDiv.addEventListener('click', () => {
+                    toggleVehicleRoute(arrivalDiv, item.SetNo, lineName, destination, stationName, arrow);
+                });
+            } else {
+                const arrow = arrivalDiv.querySelector('.route-arrow');
+                if (arrow) arrow.style.display = 'none';
+            }
+
             platformSection.appendChild(arrivalDiv);
         });
 
@@ -171,8 +186,71 @@ function updateArrivals(data) {
     });
 }
 
+async function toggleVehicleRoute(arrivalDiv, vehicleId, lineName, destination, currentStationName, arrowElem) {
+    let routeDiv = arrivalDiv.querySelector('.vehicle-route');
+    if (routeDiv) {
+        const isHidden = routeDiv.style.display === 'none';
+        routeDiv.style.display = isHidden ? 'block' : 'none';
+        if (arrowElem) arrowElem.textContent = isHidden ? '🔼' : '🔽';
+        return;
+    }
+
+    if (arrowElem) arrowElem.textContent = '🔼';
+
+    routeDiv = document.createElement('div');
+    routeDiv.className = 'vehicle-route';
+    routeDiv.style.marginTop = '5px';
+    routeDiv.style.fontSize = '0.85em';
+    routeDiv.style.color = '#ccc';
+    routeDiv.style.paddingLeft = '5px';
+    routeDiv.style.borderLeft = '2px solid #555';
+    routeDiv.innerHTML = '<em>Loading...</em>';
+    arrivalDiv.appendChild(routeDiv);
+
+    try {
+        const res = await fetch(`https://api.tfl.gov.uk/Vehicle/${vehicleId}/Arrivals`);
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+            routeDiv.innerHTML = '<em>No route data</em>';
+            return;
+        }
+
+        const newData = data
+            .filter(a => (!lineName || a.lineName?.toLowerCase() === lineName?.toLowerCase()) || (a.destinationName && destination && a.destinationName.includes(destination)))
+            .sort((a, b) => a.timeToStation - b.timeToStation);
+
+        let html = '<ul style="margin: 5px 0 0 0; padding-left: 15px; list-style-type: circle;">';
+        newData.forEach(stop => {
+            const timeStr = new Date(stop.expectedArrival).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const isCurrent = currentStationName && (stop.stationName.includes(currentStationName) || currentStationName.includes(stop.stationName));
+            html += `<li ${isCurrent ? 'style="color: green;"' : ''}>${stop.stationName} - ${timeStr}</li>`;
+        });
+        html += '</ul>';
+        routeDiv.innerHTML = html;
+
+    } catch (e) {
+        routeDiv.innerHTML = '<em>Error fetching route</em>';
+        console.error(e);
+    }
+}
+
 fetchArrivals();
-setInterval(fetchArrivals, 20000);
+
+let fetchArrivalsIntervalId;
+let fetchSummaryIntervalId;
+
+function updateFetchInterval(seconds) {
+    if (fetchArrivalsIntervalId) {
+        clearInterval(fetchArrivalsIntervalId);
+    }
+    if (fetchSummaryIntervalId) {
+        clearInterval(fetchSummaryIntervalId);
+    }
+    const ms = Math.max(20000, parseInt(seconds) * 1000);
+    fetchArrivalsIntervalId = setInterval(fetchArrivals, ms);
+    fetchSummaryIntervalId = setInterval(fetchSummaryArrivals, ms);
+}
 
 // --- Service Worker Registration ---
 if ('serviceWorker' in navigator) {
@@ -306,6 +384,7 @@ function applyDynamicUserStyles() {
 const fontSlider = document.getElementById("fontSlider");
 const lineHeightSlider = document.getElementById("lineHeightSlider");
 const letterSpacingSlider = document.getElementById("letterSpacingSlider");
+const fetchIntervalInput = document.getElementById("fetchInterval");
 const sliderContainer = document.getElementById("sliderContainer");
 const cogBtn = document.getElementById("cogBtn");
 
@@ -322,6 +401,11 @@ lineHeightSlider.addEventListener("input", (e) => {
 letterSpacingSlider.addEventListener("input", (e) => {
     setCookie("letterSpacing", e.target.value, 30);
     applyDynamicUserStyles();
+});
+
+fetchIntervalInput.addEventListener("change", (e) => {
+    setCookie("fetchInterval", e.target.value, 30);
+    updateFetchInterval(e.target.value);
 });
 
 addEventListener("DOMContentLoaded", () => {
@@ -344,6 +428,10 @@ addEventListener("DOMContentLoaded", () => {
     fontSlider.value = getCookie("fontSize") || 1;
     lineHeightSlider.value = getCookie("lineHeight") || 1.2;
     letterSpacingSlider.value = getCookie("letterSpacing") || 0;
+
+    const savedFetchInterval = getCookie("fetchInterval") || 20;
+    if (fetchIntervalInput) fetchIntervalInput.value = savedFetchInterval;
+    updateFetchInterval(savedFetchInterval);
 
     applyDynamicUserStyles();
 });
@@ -1212,7 +1300,6 @@ function renderSummaryStation(stationData, stationName) {
 
 updateSummaryButtons();
 if (summaryEnabled) fetchSummaryArrivals();
-setInterval(fetchSummaryArrivals, 30000);
 
 // Check right away when tab is refocused or app first opens
 function instantCheckIfInWindow() {
