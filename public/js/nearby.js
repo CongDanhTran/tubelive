@@ -233,7 +233,12 @@ function mapTfl(arrivals) {
                 Location: a.currentLocation || "",
                 ArrivalTime: new Date(a.expectedArrival).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) || "Unknown",
                 SecondsTo: a.timeToStation || 0,
-                LineName: a.lineName || "Unknown"
+                LineName: a.lineName || "Unknown",
+                VehicleId: a.vehicleId,
+                LineId: a.lineId,
+                direction: a.direction,
+                destinationNaptanId: a.destinationNaptanId,
+                currentLocationNaptanId: a.naptanId
             }
         });
     });
@@ -294,14 +299,27 @@ function renderStation(stationName, distance, platforms, index) {
 
 
             div.innerHTML = `
-                    <div class="departure">
-                        <span>${destination} - ${item.ArrivalTime}</span>
+                    <div class="departure" style="display: flex; align-items: center;">
+                        <span style="flex-grow: 1;">${destination} - ${item.ArrivalTime}</span>
+                        <span style="cursor: pointer; margin-right: 5px; color: #ff9729;" class="route-arrow">🔽</span>
                         <span class="time-left">${minutes} min</span>
                     </div>
                     <div class="live-location">
                         ${item.Location || ''}
                     </div>
                 `;
+
+            if (item.VehicleId) {
+                const arrow = div.querySelector('.route-arrow');
+                arrow.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleVehicleRoute(div, item.VehicleId, item.LineId, item.direction, item.destinationNaptanId, item.currentLocationNaptanId, arrow);
+                });
+                div.style.cursor = 'pointer';
+                div.addEventListener('click', () => {
+                    toggleVehicleRoute(div, item.VehicleId, item.LineId, item.direction, item.destinationNaptanId, item.currentLocationNaptanId, arrow);
+                });
+            }
 
             platformDiv.appendChild(div);
         });
@@ -310,6 +328,54 @@ function renderStation(stationName, distance, platforms, index) {
     });
 
     stationDiv.appendChild(platformsDiv);
+}
+
+async function toggleVehicleRoute(arrivalDiv, vehicleId, lineId, direction, destinationNaptanId, currentLocationNaptanId, arrowElem) {
+    let routeDiv = arrivalDiv.querySelector('.vehicle-route');
+    if (routeDiv) {
+        const isHidden = routeDiv.style.display === 'none';
+        routeDiv.style.display = isHidden ? 'block' : 'none';
+        if (arrowElem) arrowElem.textContent = isHidden ? '🔼' : '🔽';
+        return;
+    }
+
+    if (arrowElem) arrowElem.textContent = '🔼';
+
+    routeDiv = document.createElement('div');
+    routeDiv.className = 'vehicle-route';
+    routeDiv.style.marginTop = '5px';
+    routeDiv.style.fontSize = '0.85em';
+    routeDiv.style.color = '#ccc';
+    routeDiv.style.paddingLeft = '5px';
+    routeDiv.style.borderLeft = '2px solid #555';
+    routeDiv.innerHTML = '<em>Loading...</em>';
+    arrivalDiv.appendChild(routeDiv);
+
+    try {
+        const res = await fetch(`https://api.tfl.gov.uk/Vehicle/${vehicleId}/Arrivals`);
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+            routeDiv.innerHTML = '<em>No route data</em>';
+            return;
+        }
+
+        console.log(currentLocationNaptanId)
+
+        const newData = data.filter(a => (a.lineId?.trim() == lineId?.trim() && a.direction?.trim() == direction?.trim() || a.destinationNaptanId?.trim() == destinationNaptanId?.trim())).sort((a, b) => a.timeToStation - b.timeToStation);
+
+        let html = '<ul style="margin: 5px 0 0 0; padding-left: 15px; list-style-type: circle;">';
+        newData.forEach(stop => {
+            const timeStr = new Date(stop.expectedArrival).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            html += `<li ${stop.naptanId == currentLocationNaptanId ? 'style="color: green;"' : ''}>${stop.stationName} - ${timeStr}</li>`;
+        });
+        html += '</ul>';
+        routeDiv.innerHTML = html;
+
+    } catch (e) {
+        routeDiv.innerHTML = '<em>Error fetching route</em>';
+        console.error(e);
+    }
 }
 
 let pos = null;
