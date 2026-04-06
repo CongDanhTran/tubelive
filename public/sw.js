@@ -1,7 +1,7 @@
 // Version of this service worker - increment when deploying updates
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE_NAME = `tubelive-${VERSION}`;
-const CACHED_URLS = ['/', '/nearby', '/manifest.json', '/images/192-192.png', '/images/512-512.png'];
+const CACHED_URLS = ['/', '/nearby', '/images/192-192.png', '/images/512-512.png', '/css/nearby.css', '/js/nearby.js', '/js/index.js', '/css/index.css'];
 
 // Install: cache the HTML shell
 self.addEventListener('install', event => {
@@ -46,11 +46,13 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: HTML navigations served from cache (with network-first update).
+// Fetch: HTML navigations served network-first; other assets cache-first with dynamic caching.
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
   const isNavigation = event.request.mode === 'navigate';
-  const isHtmlGet = event.request.method === 'GET' &&
+  const isHtmlGet =
     (event.request.headers.get('accept')?.includes('text/html') ||
       url.pathname === '/manifest.json') &&
     url.origin === self.location.origin;
@@ -67,6 +69,30 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
+
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      // Return cached response if found
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // Otherwise, fetch from network and dynamically cache the result
+      return fetch(event.request).then(response => {
+        // Don't cache non-successful responses
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return response;
+      });
+    })
+  );
 });
 
 // Message handler

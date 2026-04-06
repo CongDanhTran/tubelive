@@ -8,231 +8,76 @@
     <link rel="manifest" href="/manifest.json?name=Tube+Live&short_name=TubeLive&start_url=/">
     <link rel="icon" href="images/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
-    <style>
-        body {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #000000;
-            color: #ff9729;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            font-weight: 400;
-            line-height: 1.5;
-            font-size: 1.4em;
-        }
-
-        .station-name {
-            font-weight: bold;
-        }
-
-        .time-left {
-            color: red;
-        }
-
-        #arrivals,
-        #summaryArrivals {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            padding: 0;
-            margin: 0;
-        }
-
-        .platform-section {
-            padding: 10px;
-            border-radius: 10px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        h3 {
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin: 0;
-            color: white;
-        }
-
-        .arrival-time {
-            padding: 10px;
-            background-color: #000;
-            border-bottom: 1px solid #555;
-            margin: 5px 0;
-            letter-spacing: 1px;
-            text-align: left;
-        }
-
-        .arrival-time p {
-            font-weight: bold;
-            margin: 5px 0;
-            line-height: 1.5;
-            padding: 10px;
-            background-color: #000;
-            margin: 5px 0;
-            letter-spacing: 1px;
-            text-align: left;
-        }
-
-        .live-location {
-            font-weight: light;
-            color: green;
-        }
-
-        .departure {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .departure p {
-            margin: 0;
-            padding: 0;
-        }
-
-        .journeyContainer {
-            display: flex;
-        }
-
-        .journey {
-            padding: 10px;
-            text-align: left;
-            font-size: 1em;
-        }
-
-        @media (max-width: 900px) {
-            .journeyContainer {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-
-            #arrivals,
-            #summaryArrivals {
-                grid-template-columns: 1fr;
-            }
-
-            .journeyContainer {
-                display: grid;
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Cog panel */
-        .cache-btn {
-            display: block;
-            width: 100%;
-            margin-top: 8px;
-            padding: 7px 10px;
-            background: #1a1a1a;
-            border: 1px solid #444;
-            color: #ff9729;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.1em;
-            cursor: pointer;
-            border-radius: 5px;
-            text-align: left;
-            box-sizing: border-box;
-        }
-
-        .cache-btn:active {
-            background: #333;
-        }
-
-        #cacheStatus {
-            margin-top: 6px;
-            font-size: 0.9em;
-            color: #0f0;
-            min-height: 1.2em;
-            text-align: left;
-        }
-    </style>
+    <link rel="stylesheet" href="css/index.css">
 </head>
 
 <body>
-    <button onclick="location.reload()"
-        style="position:absolute;background: #1a1a1a;color: #ff9729;border: 1px solid #444;padding: 8px 15px;border-radius: 5px;font-family: 'Courier New', Courier, monospace;font-size: 0.6em;cursor: pointer;left: 0;top: 0;">
+    <button id="reloadBtn" onclick="location.reload()">
         🔄
     </button>
-    <div style="color: red; font-weight: bold; text-align: center;" id="status"></div>
+    <div id="status"></div>
 
     <div>
-        <span id="clock" style="color: red; font-weight:bold; position: fixed; right: 0; top:0;"></span>
+        <span id="clock"></span>
     </div>
     <span class="station-name">Live</span>
     <div id="arrivals"></div>
     <div id="summaryArrivals"></div>
     <!-- Cog settings panel -->
-    <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
-        <button id="cogBtn"
-            style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
-        <div id="sliderContainer"
-            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:1em; box-sizing: border-box; max-width: 90vw; max-height: 90vh; overflow-y: scroll;">
+    <div id="fontControls">
+        <button id="cogBtn">⚙️</button>
+        <div id="sliderContainer">
             <label for="fontSlider">Font Size:</label>
-            <input type="range" id="fontSlider" min="0.8" max="1.5" step="0.1" style="width: 100%;">
-            <label for="lineHeightSlider" style="margin-top: 5px; display: block;">Line Height:</label>
-            <input type="range" id="lineHeightSlider" min="0.5" max="2" step="0.1" style="width: 100%;">
-            <label for="letterSpacingSlider" style="margin-top: 5px; display: block;">Letter Spacing:</label>
-            <input type="range" id="letterSpacingSlider" min="-2" max="2" step="0.1" style="width: 100%;">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <input type="range" id="fontSlider" min="0.8" max="1.5" step="0.1">
+            <label for="lineHeightSlider" class="margin-top-5">Line Height:</label>
+            <input type="range" id="lineHeightSlider" min="0.5" max="2" step="0.1">
+            <label for="letterSpacingSlider" class="margin-top-5">Letter Spacing:</label>
+            <input type="range" id="letterSpacingSlider" min="-2" max="2" step="0.1">
+            <hr>
             <button class="cache-btn" id="recacheBtn">🔄 Offline mode</button>
             <button class="cache-btn" id="clearCacheBtn">🗑️ Clear offline</button>
             <div id="cacheStatus"></div>
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
-            <label style="font-size: 0.8em;"><a style=" color: white;" href="https://api-portal.tfl.gov.uk/"
-                    target="_blank">Trackernet Key (Real-time TFL Data):</a></label>
-            <input type="text" id="appKeyInput" value=""
-                style="width: 100%; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
-            <div style="display: grid; gap: 5px; margin-top: 8px; align-items: center;">
-                <label style="font-size: 0.8em;">Line:</label>
-                <select id="lineInput"
-                    style="width:100%; text-align: center; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+            <hr>
+            <label><a href="https://api-portal.tfl.gov.uk/" target="_blank">Trackernet Key (Real-time TFL
+                    Data):</a></label>
+            <input type="text" id="appKeyInput" value="" class="settings-input" style="width: 100%;">
+            <hr>
+            <div class="grid-layout">
+                <label>Line:</label>
+                <select id="lineInput" class="settings-input settings-input-center">
                 </select>
-                <label style="font-size: 0.8em;">Monitor Station:</label>
-                <select id="stationInput"
-                    style="width:100%; text-align: center; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                <label>Monitor Station:</label>
+                <select id="stationInput" class="settings-input settings-input-center">
                 </select>
             </div>
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
-            <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
+            <hr>
+            <div class="flex-layout">
                 <label for="setNoInput">Monitor Tube Number:</label>
-                <input type="text" id="setNoInput" value=""
-                    style="max-width: 50px; background: #222; color: #ff9729; border: 1px solid #444; padding: 5px; border-radius: 5px; box-sizing: border-box; margin-top: 4px;">
-                <label style="font-size: 0.8em;">Alert every (mins):</label>
-                <input type="number" id="checkIntervalInput" min="1" max="60"
-                    style="width: 50px; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+                <input type="text" id="setNoInput" value="" class="settings-input">
+                <label>Alert every (mins):</label>
+                <input type="number" id="checkIntervalInput" min="1" max="60" class="settings-input">
             </div>
-            <div style="display: flex; gap: 5px; margin-top: 8px; align-items: center;">
-                <label style="font-size: 0.8em;">From:</label>
-                <input type="time" id="timeFromInput" step="1"
-                    style="background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
-                <label style="font-size: 0.8em;">To:</label>
-                <input type="time" id="timeToInput" step="1"
-                    style="background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
-
+            <div class="flex-layout">
+                <label>From:</label>
+                <input type="time" id="timeFromInput" step="1" class="settings-input">
+                <label>To:</label>
+                <input type="time" id="timeToInput" step="1" class="settings-input">
             </div>
             <button class="cache-btn" id="alert5amBtn">🔕 Device Alert: OFF</button>
             <button class="cache-btn" id="test5amBtn">🧪 Test Alert</button>
             <button class="cache-btn" id="serverAlertBtn">🔕 Server Push Alert: OFF</button>
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <hr>
             <button class="cache-btn" id="summaryToggleBtn">Multi-Station: OFF</button>
-            <div style="display: grid; gap: 5px; margin-top: 8px; align-items: center;">
-                <label style="font-size: 0.8em;">Line:</label>
-                <select id="summaryLineInput"
-                    style="width: 100%; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; font-family: inherit; font-size: 1em;">
+            <div class="grid-layout">
+                <label>Line:</label>
+                <select id="summaryLineInput" class="settings-input" style="width: 100%;">
                 </select>
-                <label style="font-size: 0.8em;">Stations (same line):</label>
-                <div style="position: relative; width: 100%; display: inline-block;">
-                    <button id="summaryStationsBtn"
-                        style="width: 100%; background: #222; color: #ff9729; border: 1px solid #444; padding: 3px; border-radius: 5px; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: inherit; font-size: 0.9em;">
+                <label>Stations (same line):</label>
+                <div class="summary-stations-wrapper">
+                    <button id="summaryStationsBtn">
                         Select Stations...
                     </button>
-                    <div id="summaryStationsMenu"
-                        style="text-align: left; display: none; position: absolute; top: 100%; left: 0; right: 0; background: #222; border: 1px solid #444; z-index: 100; max-height: 200px; overflow-y: auto; overflow-x: hidden; border-radius: 5px; margin-top: 2px; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">
+                    <div id="summaryStationsMenu">
                     </div>
                 </div>
             </div>

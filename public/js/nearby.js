@@ -50,6 +50,10 @@ document.getElementById('recacheBtn').addEventListener('click', async () => {
         try {
             const cache = await caches.open('tubelive-v4');
             await cache.add('/nearby');
+            await cache.add('/css/nearby.css');
+            await cache.add('/js/nearby.js');
+            await cache.add('/js/index.js');
+            await cache.add('/css/index.css');
             await cache.add('/manifest.json?name=Nearby+Tubes&short_name=Nearby&start_url=/nearby.html');
             await cache.add('/images/192-192.png');
             await cache.add('/images/512-512.png');

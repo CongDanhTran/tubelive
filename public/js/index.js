@@ -226,7 +226,12 @@ document.getElementById('recacheBtn').addEventListener('click', async () => {
         try {
             const cache = await caches.open('tubelive');
             await cache.add('/index');
-            await cache.add('/manifest.json');
+            await cache.add('/manifest.json?name=Tube+Live&short_name=Tube+Live&start_url=/index.html');
+            await cache.add('/nearby');
+            await cache.add('/css/index.css');
+            await cache.add('/css/nearby.css');
+            await cache.add('/js/index.js');
+            await cache.add('/js/nearby.js');
             await cache.add('/images/192-192.png');
             await cache.add('/images/512-512.png');
             cacheStatus.style.color = '#0f0';

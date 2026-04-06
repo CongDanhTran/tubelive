@@ -6,82 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Tube</title>
     <link rel="manifest" href="/manifest.json?name=Nearby+Tubes&short_name=Nearby&start_url=/nearby.html">
-
-    <style>
-        body {
-            font-family: 'Courier New', monospace;
-            background: #000;
-            color: #ff9729;
-            margin: 0;
-            font-size: 1.2em;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        #clock {
-            position: fixed;
-            top: 5px;
-            right: 10px;
-            color: red;
-            font-weight: bold;
-        }
-
-        .station-block {
-            border-bottom: 2px solid #222;
-            padding: 15px;
-        }
-
-        .station-name {
-            font-weight: bold;
-            font-size: 1.3em;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .platforms {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 10px;
-        }
-
-        .platform-section {
-            background: #111;
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        h3 {
-            margin: 0;
-            color: #fff;
-        }
-
-        .arrival-time {
-            border-bottom: 1px solid #444;
-            margin: 5px 0;
-            font-size: 0.9em;
-        }
-
-        .departure {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .time-left {
-            color: red;
-        }
-
-        .live-location {
-            color: #0f0;
-            font-size: 0.85em;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/nearby.css">
 </head>
 
 <body>
     <button id="reloadBtn">🔄 Refresh</button>
-    <div style="color: red; font-weight: bold; text-align: center;" id="status">Getting location...</div>
+    <div id="status">Getting location...</div>
     <div id="clock"></div>
     <div id="arrivals">
         <div id="station-0" class="station-block hidden"></div>
@@ -98,29 +28,27 @@
 
 
     <!-- Cog settings panel -->
-    <div id="fontControls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
-        <button id="cogBtn"
-            style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">⚙️</button>
-        <div id="sliderContainer"
-            style="display:none; background:#111; padding:10px; border-radius:8px; margin-top:5px; color:white; font-size:0.4em; min-width: 200px;">
+    <div id="fontControls">
+        <button id="cogBtn">⚙️</button>
+        <div id="sliderContainer">
             <label for="fontSlider">Font Size:</label>
             <input type="range" id="fontSlider" min="0.8" max="2" step="0.1">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <hr>
             <label for="radius">Radius (m):</label>
             <input type="number" id="radius" min="300" max="5000" step="100" value="1000">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <hr>
             <label for="onlineTimeout">Return Timeout (s):</label>
             <input type="number" id="onlineTimeout" min="5" max="60" step="1" value="20">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <hr>
             <label for="geoTimeout">Geo Timeout (s):</label>
             <input type="number" id="geoTimeout" min="5" max="30" step="1" value="15">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <hr>
             <label for="locationInterval">Location Interval (s):</label>
             <input type="number" id="locationInterval" min="5" max="60" step="1" value="10">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <hr>
             <label for="fetchInterval">Fetch Interval (s):</label>
             <input type="number" id="fetchInterval" min="10" max="120" step="1" value="20">
-            <hr style="border:none; border-top:1px solid #333; margin: 10px 0;">
+            <hr>
             <button class="cache-btn" id="recacheBtn">🔄 Re-cache page</button>
             <button class="cache-btn" id="clearCacheBtn">🗑️ Clear cache</button>
             <div id="cacheStatus"></div>
