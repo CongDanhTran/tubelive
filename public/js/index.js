@@ -1219,8 +1219,27 @@ function instantCheckIfInWindow() {
     }
 }
 
+let refocusCheckEnabled = localStorage.getItem('refocusCheckEnabled') !== 'false';
+const refocusCheckBtn = document.getElementById('refocusCheckBtn');
+
+function updateRefocusButton() {
+    if (refocusCheckBtn) {
+        refocusCheckBtn.textContent = refocusCheckEnabled ? '🔁 Auto Check: ON' : '🔁 Auto Check: OFF';
+        refocusCheckBtn.style.color = refocusCheckEnabled ? '#0f0' : '#ff9729';
+    }
+}
+
+if (refocusCheckBtn) {
+    refocusCheckBtn.addEventListener('click', () => {
+        refocusCheckEnabled = !refocusCheckEnabled;
+        localStorage.setItem('refocusCheckEnabled', refocusCheckEnabled);
+        updateRefocusButton();
+    });
+    updateRefocusButton();
+}
+
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') instantCheckIfInWindow();
+    if (refocusCheckEnabled && document.visibilityState === 'visible') instantCheckIfInWindow();
 });
 
 // Initial check on page load
