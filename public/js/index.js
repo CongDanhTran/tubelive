@@ -912,6 +912,12 @@ function updateAlertButtons() {
 }
 
 alert5amBtn.addEventListener('click', async () => {
+    if (!alert5amEnabled) {
+        if (!monitoredSetNo || !timeFrom || !timeTo) {
+            alert("Please provide a Monitor Tube Number, Time From, and Time To.");
+            return;
+        }
+    }
     if (Notification.permission === 'default') {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') return;
@@ -922,6 +928,12 @@ alert5amBtn.addEventListener('click', async () => {
 });
 
 serverAlertBtn.addEventListener('click', async () => {
+    if (!serverAlertEnabled) {
+        if (!monitoredSetNo || !timeFrom || !timeTo) {
+            alert("Please provide a Monitor Tube Number, Time From, and Time To.");
+            return;
+        }
+    }
     if (Notification.permission === 'default') {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') return;
@@ -940,6 +952,10 @@ serverAlertBtn.addEventListener('click', async () => {
 updateAlertButtons();
 
 document.getElementById('test5amBtn').addEventListener('click', async () => {
+    if (!monitoredSetNo || !timeFrom || !timeTo) {
+        alert("Please provide a Monitor Tube Number, Time From, and Time To.");
+        return;
+    }
     if (Notification.permission === 'default' || Notification.permission !== 'granted') {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
@@ -1224,7 +1240,7 @@ const refocusCheckBtn = document.getElementById('refocusCheckBtn');
 
 function updateRefocusButton() {
     if (refocusCheckBtn) {
-        refocusCheckBtn.textContent = refocusCheckEnabled ? '🔁 Auto Check: ON' : '🔁 Auto Check: OFF';
+        refocusCheckBtn.textContent = refocusCheckEnabled ? '🔁 First Run Check: ON' : '🔁 First Run Check: OFF';
         refocusCheckBtn.style.color = refocusCheckEnabled ? '#0f0' : '#ff9729';
     }
 }
