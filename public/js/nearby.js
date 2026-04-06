@@ -261,7 +261,7 @@ function renderStation(stationName, distance, platforms, index) {
     if (!platforms || Object.keys(platforms).length === 0) {
         stationDiv.innerHTML = `
                 <div class="station-name">
-                    ${stationName} (${Math.round(distance)}m)
+                    ${stationName.replace("Underground Station", "")} (${Math.round(distance)}m)
                 </div>
                 <div class="platforms">
                     <div class="platform-section">
@@ -276,7 +276,7 @@ function renderStation(stationName, distance, platforms, index) {
 
     stationDiv.innerHTML = `
                 <div class="station-name">
-                    ${stationName} (${Math.round(distance)}m)
+                    ${stationName.replace("Underground Station", "")} (${Math.round(distance)}m)
                 </div>
             `;
 
@@ -367,7 +367,7 @@ async function toggleVehicleRoute(arrivalDiv, vehicleId, lineId, direction, dest
         let html = '<ul style="margin: 5px 0 0 0; padding-left: 15px; list-style-type: circle;">';
         newData.forEach(stop => {
             const timeStr = new Date(stop.expectedArrival).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            html += `<li ${stop.naptanId == currentLocationNaptanId ? 'style="color: green;"' : ''}>${stop.stationName} - ${timeStr}</li>`;
+            html += `<li ${stop.naptanId == currentLocationNaptanId ? 'style="color: green;"' : ''}>${stop.stationName.replace("Underground Station", "")} - ${timeStr}</li>`;
         });
         html += '</ul>';
         routeDiv.innerHTML = html;

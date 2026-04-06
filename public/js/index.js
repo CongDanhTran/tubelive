@@ -224,7 +224,7 @@ async function toggleVehicleRoute(arrivalDiv, vehicleId, lineName, destination, 
         newData.forEach(stop => {
             const timeStr = new Date(stop.expectedArrival).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const isCurrent = currentStationName && (stop.stationName.includes(currentStationName) || currentStationName.includes(stop.stationName));
-            html += `<li ${isCurrent ? 'style="color: green;"' : ''}>${stop.stationName} - ${timeStr}</li>`;
+            html += `<li ${isCurrent ? 'style="color: green;"' : ''}>${stop.stationName.replace(".", "").replace("Underground Station", "")} - ${timeStr}</li>`;
         });
         html += '</ul>';
         routeDiv.innerHTML = html;
@@ -1260,7 +1260,7 @@ function renderSummaryStation(stationData, stationName) {
         platformSection.classList.add('platform-section');
 
         const platformHeader = document.createElement('h3');
-        platformHeader.textContent = `${platform} - ${stationName}`;
+        platformHeader.textContent = `${platform} - ${stationName.replace(".", "").replace("Underground Station", "")}`;
         platformSection.appendChild(platformHeader);
 
         platforms[platform].slice(0, 3).forEach(train => {
@@ -1367,7 +1367,7 @@ async function performArrivalCheck(force = false) {
         let found = false;
         const platforms = Array.isArray(data.ROOT.S.P) ? data.ROOT.S.P : [data.ROOT.S.P];
 
-        const stationName = data.ROOT.S['@attributes'].N;
+        const stationName = data.ROOT.S['@attributes'].N.replace(".", "");
 
         platforms.forEach(p => {
             if (!p.T) return;
@@ -1380,7 +1380,7 @@ async function performArrivalCheck(force = false) {
                     if (force || (localArrivalTime >= timeFrom && localArrivalTime <= timeTo)) {
                         found = true;
                         const lineName = lineNames[monitoredLine] || monitoredLine;
-                        showLocalNotification(`[${today}] ${stationName} - ${lineName} ${monitoredSetNo} to ${attr.Destination} - ${localArrivalTime}`);
+                        showLocalNotification(`[${today}] ${stationName.replace(".", "")} - ${lineName} ${monitoredSetNo} to ${attr.Destination} - ${localArrivalTime}`);
                     }
                 }
             });
