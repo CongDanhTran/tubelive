@@ -48,7 +48,7 @@ document.getElementById('recacheBtn').addEventListener('click', async () => {
     } catch (e) {
         // Fallback if SW not yet controlling the page
         try {
-            const cache = await caches.open('tubelive-v4');
+            const cache = await caches.open('tubelive-v7');
             await cache.add('/nearby');
             await cache.add('/css/nearby.css');
             await cache.add('/js/nearby.js');
@@ -77,7 +77,7 @@ document.getElementById('clearCacheBtn').addEventListener('click', async () => {
         cacheStatus.textContent = '✓ Cache cleared!';
     } catch (e) {
         try {
-            await caches.delete('tubelive-v1');
+            await caches.delete('tubelive-v7');
             cacheStatus.style.color = '#0f0';
             cacheStatus.textContent = '✓ Cache cleared!';
         } catch (err) {

@@ -1340,13 +1340,24 @@ if (refocusCheckBtn) {
     });
     updateRefocusButton();
 }
-
+let lastHiddenTime = null;
+let firstTime = true;
 document.addEventListener('visibilitychange', () => {
-    if (refocusCheckEnabled && document.visibilityState === 'visible') instantCheckIfInWindow();
+    if (document.visibilityState === 'hidden') lastHiddenTime = new Date();
+    if (document.visibilityState === 'visible' && lastHiddenTime && !firstTime) {
+        const now = new Date();
+        const diff = now - lastHiddenTime;
+        console.log("diff", diff);
+        if (diff > 60000) fetchArrivals();
+        if ((diff > 600000) && refocusCheckEnabled) instantCheckIfInWindow();
+    }
 });
 
 // Initial check on page load
-instantCheckIfInWindow();
+if (firstTime) {
+    instantCheckIfInWindow();
+    firstTime = false;
+}
 
 async function performArrivalCheck(force = false) {
     if (!alert5amEnabled && !force) return;

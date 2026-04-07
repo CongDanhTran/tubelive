@@ -1,5 +1,5 @@
 // Version of this service worker - increment when deploying updates
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE_NAME = `tubelive-${VERSION}`;
 const CACHED_URLS = ['/', '/nearby', '/images/192-192.png', '/images/512-512.png', '/css/nearby.css', '/js/nearby.js', '/js/index.js', '/css/index.css'];
 
