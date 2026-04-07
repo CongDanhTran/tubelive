@@ -30,7 +30,7 @@ app.get('/manifest.json', (req, res) => {
             if (req.query.name) manifest.name = req.query.name;
             if (req.query.short_name) manifest.short_name = req.query.short_name;
             if (req.query.start_url) manifest.start_url = req.query.start_url;
-            
+
             res.setHeader('Content-Type', 'application/manifest+json');
             res.send(JSON.stringify(manifest, null, 2));
         } catch (e) {
@@ -241,8 +241,9 @@ async function performGlobalCheck() {
                 const { subscription, monitoredSetNo, timeFrom, timeTo } = sub;
                 const paddedSetNo = monitoredSetNo.toString().padStart(3, '0');
 
-                const fromDate = parseTimeToDate(timeFrom, apiDate);
-                const toDate = parseTimeToDate(timeTo, apiDate);
+                const formatTimeStr = (t) => t && t.length === 5 ? t + ":00" : t;
+                const fromTimeStr = formatTimeStr(timeFrom);
+                const toTimeStr = formatTimeStr(timeTo);
 
                 let found = false;
 
@@ -258,18 +259,23 @@ async function performGlobalCheck() {
 
                         for (const t of trains) {
                             const attrs = t["@attributes"];
-                            if (attrs && attrs.SetNo === paddedSetNo) {
+                            if (attrs && attrs.SetNo == paddedSetNo.trim()) {
                                 const utcTime = attrs.ArrivalTime || attrs.DepartTime;
+
+                                console.log("utc: " + utcTime);
                                 if (utcTime) {
                                     const localArrivalTime = tflTimeToLocal(utcTime, apiDate);
-                                    const arrivalDate = parseTimeToDate(localArrivalTime, apiDate);
 
-                                    if (fromDate && toDate && arrivalDate >= fromDate && arrivalDate <= toDate) {
+                                    console.log("localArrivalTime: " + localArrivalTime);
+                                    console.log("timeFrom: " + fromTimeStr);
+                                    console.log("timeTo: " + toTimeStr);
+
+                                    if (fromTimeStr && toTimeStr && localArrivalTime >= fromTimeStr && localArrivalTime <= toTimeStr) {
                                         found = true;
                                         const lineName = lineNames[sub.line] || sub.line;
                                         sendPush(subscription, {
-                                            title: `[${today}] ${stationName} - ${lineName} ${monitoredSetNo} to ${attrs.Destination} - ${localArrivalTime}`,
-                                            body: `[${today}] ${stationName} - ${lineName} ${monitoredSetNo} to ${attrs.Destination} - ${localArrivalTime}`,
+                                            title: `[${today}] ${monitoredSetNo} to ${attrs.Destination} - ${localArrivalTime}`,
+                                            body: `[${today}] ${monitoredSetNo} ${attrs.Destination} - ${localArrivalTime} ${stationName} - ${lineName}`,
                                         });
                                         break;
                                     }
@@ -280,7 +286,9 @@ async function performGlobalCheck() {
                     }
 
                     if (!found) {
-                        if (fromDate && toDate && apiDate >= fromDate && apiDate <= toDate) {
+                        const pad = n => n.toString().padStart(2, '0');
+                        const apiTimeStr = `${pad(apiDate.getHours())}:${pad(apiDate.getMinutes())}:${pad(apiDate.getSeconds())}`;
+                        if (fromTimeStr && toTimeStr && apiTimeStr >= fromTimeStr && apiTimeStr <= toTimeStr) {
                             const whenCreatedTime = (whenCreatedRaw.split(' ').pop() || "").padStart(8, '0');
                             console.log(`Train ${monitoredSetNo} not found in JSON for ${key} within time window (API Time: ${whenCreatedTime}, Date: ${today}).`);
                             const lineName = lineNames[sub.line] || sub.line;

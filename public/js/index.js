@@ -470,12 +470,12 @@ async function subscribeToPush() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 subscription,
-                monitoredSetNo,
-                timeFrom,
-                timeTo,
-                station: monitoredStation,
-                line: monitoredLine,
-                appKey: monitoredAppKey
+                monitoredSetNo: monitoredSetNo.trim(),
+                timeFrom: timeFrom.trim(),
+                timeTo: timeTo.trim(),
+                station: monitoredStation.trim(),
+                line: monitoredLine.trim(),
+                appKey: monitoredAppKey.trim()
             })
         });
         console.log("Server-side subscription successful.");
