@@ -90,9 +90,15 @@ function tflTimeToLocal(utcString, refDate = new Date()) {
     if (!utcString || !utcString.includes(':')) return utcString;
     const [h, m, s] = utcString.split(':').map(Number);
     const date = new Date(refDate);
-    date.setUTCHours(h, m, s, 0);
-    const pad = n => n.toString().padStart(2, '0');
-    return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    date.setUTCHours(h, m, s || 0, 0);
+
+    return date.toLocaleTimeString('en-GB', {
+        timeZone: 'Europe/London',
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 }
 
 function xmlToJson(xml) {
