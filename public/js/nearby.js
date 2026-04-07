@@ -37,6 +37,40 @@ function sendSwMessage(msg) {
 
 // Cache controls
 const cacheStatus = document.getElementById('cacheStatus');
+const lineHeightSlider = document.getElementById("lineHeightSlider");
+const letterSpacingSlider = document.getElementById("letterSpacingSlider");
+
+lineHeightSlider.addEventListener("input", (e) => {
+    setCookie("lineHeight", e.target.value, 30);
+    applyDynamicUserStyles();
+});
+
+letterSpacingSlider.addEventListener("input", (e) => {
+    setCookie("letterSpacing", e.target.value, 30);
+    applyDynamicUserStyles();
+});
+function applyDynamicUserStyles() {
+    let styleTag = document.getElementById("dynamic-user-styles");
+    if (!styleTag) {
+        styleTag = document.createElement("style");
+        styleTag.id = "dynamic-user-styles";
+        document.head.appendChild(styleTag);
+    }
+
+    const fs = getCookie("fontSize") || 1;
+    const lh = getCookie("lineHeight") || 1.2;
+    const ls = getCookie("letterSpacing") || 0;
+
+    styleTag.innerHTML = `
+                    body {
+                        font-size: ${fs}em !important;
+                    }
+                    body * {
+                        line-height: ${lh} !important;
+                        letter-spacing: ${ls}px !important;
+                    }
+                `;
+}
 
 document.getElementById('recacheBtn').addEventListener('click', async () => {
     cacheStatus.style.color = '#ff9729';
