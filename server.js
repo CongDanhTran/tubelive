@@ -281,7 +281,7 @@ async function performGlobalCheck() {
                                         const lineName = lineNames[sub.line] || sub.line;
                                         sendPush(subscription, {
                                             title: `[${today}] ${stationName} - ${lineName}`,
-                                            body: `[${today}] ${localArrivalTime} -  ${monitoredSetNo} to ${attrs.Destination}`,
+                                            body: `${localArrivalTime} -  ${monitoredSetNo} to ${attrs.Destination} - location: ${attrs.Location}`,
                                         });
                                         break;
                                     }

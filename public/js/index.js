@@ -1391,7 +1391,7 @@ async function performArrivalCheck(force = false) {
                     if (force || (localArrivalTime >= timeFrom && localArrivalTime <= timeTo)) {
                         found = true;
                         const lineName = lineNames[monitoredLine] || monitoredLine;
-                        showLocalNotification(`[${today}] ${stationName.replace(".", "")} - ${lineName}`, `${localArrivalTime} - ${monitoredSetNo} to ${attr.Destination}`);
+                        showLocalNotification(`[${today}] ${stationName.replace(".", "")} - ${lineName}`, `${localArrivalTime} - ${monitoredSetNo} to ${attr.Destination} - location: ${attr.Location}`);
                     }
                 }
             });
