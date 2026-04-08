@@ -88,7 +88,17 @@ function validateInputs() {
     return true;
 }
 
+let fetchCount = 0;
+const maxFetchCount = 50;
+
 function fetchArrivals() {
+    if (fetchCount > maxFetchCount) {
+        clearAllIntervals();
+        document.getElementById('status').innerText = "Maximum reached, refresh to continue";
+        return;
+    }
+    fetchCount++;
+
     if (!validateInputs()) return;
     fetch(URL)
         .then(response => {
@@ -240,13 +250,17 @@ fetchArrivals();
 let fetchArrivalsIntervalId;
 let fetchSummaryIntervalId;
 
-function updateFetchInterval(seconds) {
+function clearAllIntervals() {
     if (fetchArrivalsIntervalId) {
         clearInterval(fetchArrivalsIntervalId);
     }
     if (fetchSummaryIntervalId) {
         clearInterval(fetchSummaryIntervalId);
     }
+}
+
+function updateFetchInterval(seconds) {
+    clearAllIntervals();
     const ms = Math.max(20000, parseInt(seconds) * 1000);
     fetchArrivalsIntervalId = setInterval(fetchArrivals, ms);
     fetchSummaryIntervalId = setInterval(fetchSummaryArrivals, ms);
@@ -1343,11 +1357,20 @@ if (refocusCheckBtn) {
 let lastHiddenTime = null;
 let firstTime = true;
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') lastHiddenTime = new Date();
+    if (document.visibilityState === 'hidden') {
+        lastHiddenTime = new Date();
+        console.log("lastHiddenTime", lastHiddenTime);
+        clearAllIntervals()
+        document.getElementById('status').innerText = "Refreshing stopped";
+    }
     if (document.visibilityState === 'visible' && lastHiddenTime && !firstTime) {
         const now = new Date();
         const diff = now - lastHiddenTime;
         console.log("diff", diff);
+        document.getElementById('status').innerText = "";
+        const savedFetchInterval = getCookie("fetchInterval") || 20;
+        if (fetchIntervalInput) fetchIntervalInput.value = savedFetchInterval;
+        updateFetchInterval(savedFetchInterval);
         if (diff > 60000) fetchArrivals();
         if ((diff > 600000) && refocusCheckEnabled) instantCheckIfInWindow();
     }
